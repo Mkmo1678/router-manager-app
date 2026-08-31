@@ -29,16 +29,15 @@ jobs:
           set +e
           gradle assembleDebug --no-daemon --stacktrace > build_log.txt 2>&1
           EXIT_CODE=$?
-          cat build_log.txt
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "=== BUILD FAILED, extracting errors ==="
+            grep -iE "error:|FAILURE:|What went wrong:|Caused by:" build_log.txt | head -30 | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+            echo "=== LAST 80 LINES ==="
+            tail -80 build_log.txt
+          fi
           exit $EXIT_CODE
-
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build_log.txt
-          retention-days: 7
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
