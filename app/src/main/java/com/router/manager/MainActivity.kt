@@ -270,6 +270,58 @@ class MainActivity : android.app.Activity() {
                         }
                     }
                 }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    // 自动填充已保存的用户名和密码
+                    if (router.username.isNotEmpty() || router.password.isNotEmpty()) {
+                        val user = escapeJs(router.username)
+                        val pwd = escapeJs(router.password)
+                        val js = """
+                            (function() {
+                                try {
+                                    var user = '$user';
+                                    var pwd = '$pwd';
+                                    var pwdInputs = document.querySelectorAll('input[type=password]');
+                                    if (pwdInputs.length > 0) {
+                                        var p = pwdInputs[0];
+                                        p.value = pwd;
+                                        p.dispatchEvent(new Event('input', {bubbles:true}));
+                                        p.dispatchEvent(new Event('change', {bubbles:true}));
+                                        // 找密码框前面的文本输入框
+                                        var prev = p.previousElementSibling;
+                                        var found = false;
+                                        while (prev) {
+                                            if (prev.tagName === 'INPUT' && (prev.type === 'text' || prev.type === 'email' || prev.type === '' || !prev.type)) {
+                                                prev.value = user;
+                                                prev.dispatchEvent(new Event('input', {bubbles:true}));
+                                                prev.dispatchEvent(new Event('change', {bubbles:true}));
+                                                found = true;
+                                                break;
+                                            }
+                                            prev = prev.previousElementSibling;
+                                        }
+                                        // 按 name/id 查找用户名框
+                                        if (!found) {
+                                            var all = document.querySelectorAll('input[type=text], input[type=email], input:not([type])');
+                                            for (var i = 0; i < all.length; i++) {
+                                                var inp = all[i];
+                                                var key = (inp.name + inp.id).toLowerCase();
+                                                if (key.indexOf('user')>=0 || key.indexOf('name')>=0 || key.indexOf('login')>=0 || key.indexOf('account')>=0 || key.indexOf('username')>=0) {
+                                                    inp.value = user;
+                                                    inp.dispatchEvent(new Event('input', {bubbles:true}));
+                                                    inp.dispatchEvent(new Event('change', {bubbles:true}));
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch(e) {}
+                            })();
+                        """.trimIndent()
+                        view?.evaluateJavascript(js, null)
+                    }
+                }
             }
             webChromeClient = WebChromeClient()
             loadUrl(router.url)
@@ -459,6 +511,16 @@ class MainActivity : android.app.Activity() {
         webViewPool.values.forEach { it.destroy() }
         webViewPool.clear()
         super.onDestroy()
+    }
+
+    /** 转义 JS 字符串中的特殊字符，防止注入 */
+    private fun escapeJs(s: String): String {
+        return s.replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
     }
 
     private fun dp(value: Int): Int {

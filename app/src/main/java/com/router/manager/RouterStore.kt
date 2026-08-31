@@ -44,7 +44,10 @@ object RouterStore {
         val name: String,
         val url: String,
         val iconColor: Int,
-        val customIconPath: String?
+        val customIconPath: String?,
+        val username: String = "",
+        val password: String = "",
+        val showIp: Boolean = true
     )
 
     // ─── 持久化 ──────────────────────────────────────────
@@ -64,7 +67,10 @@ object RouterStore {
                         name = obj.getString("name"),
                         url = obj.getString("url"),
                         iconColor = obj.optInt("iconColor", iconColors[0]),
-                        customIconPath = customPath.ifEmpty { null }
+                        customIconPath = customPath.ifEmpty { null },
+                        username = obj.optString("username", ""),
+                        password = obj.optString("password", ""),
+                        showIp = obj.optBoolean("showIp", true)
                     )
                 )
             }
@@ -83,6 +89,9 @@ object RouterStore {
                 put("url", r.url)
                 put("iconColor", r.iconColor)
                 put("customIconPath", r.customIconPath ?: "")
+                put("username", r.username)
+                put("password", r.password)
+                put("showIp", r.showIp)
             }
             arr.put(obj)
         }

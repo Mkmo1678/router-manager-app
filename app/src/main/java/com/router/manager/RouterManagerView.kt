@@ -17,8 +17,8 @@ import android.widget.TextView
 import java.io.File
 
 /**
- * 首页：路由器列表（精致卡片风格）
- * 支持自定义标题、主题色、背景图、IP隐藏
+ * 首页：路由器列表（玻璃拟态卡片风格）
+ * 每卡片独立IP/密码显示隐藏，支持保存密码自动填充
  */
 class RouterManagerView(context: Context, private val statusBarHeight: Int) : FrameLayout(context) {
 
@@ -36,7 +36,6 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
     private var themeColor: Int = AppSettings.defaultTheme
 
     init {
-        // 背景图层（最底层，CENTER_CROP 裁剪填满）
         bgImageView = ImageView(context).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -46,20 +45,17 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
 
         val scrollView = ScrollView(context).apply {
             isVerticalScrollBarEnabled = false
-            setPadding(0, 0, 0, 0)
         }
 
         contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            // 顶部留出状态栏高度，底部留出导航栏+底部导航高度
-            setPadding(dp(20), statusBarHeight + dp(12), dp(20), dp(140))
+            setPadding(dp(16), statusBarHeight + dp(12), dp(16), dp(140))
         }
 
-        // 标题栏：标题 + 设置按钮
         val titleBar = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(8), 0, dp(24))
+            setPadding(dp(6), dp(8), dp(6), dp(24))
         }
 
         titleText = TextView(context).apply {
@@ -113,19 +109,8 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
     fun applyTheme() {
         themeColor = AppSettings.getThemeColor(context)
         applyTextColor()
-        // 刷新所有卡片的"进入管理"颜色
-        for (i in 0 until cardsContainer.childCount) {
-            val card = cardsContainer.getChildAt(i) as? FrameLayout
-            card?.let {
-                val content = it.getChildAt(1) as? LinearLayout
-                val textLayout = content?.getChildAt(1) as? LinearLayout
-                val enterText = textLayout?.getChildAt(2) as? TextView
-                enterText?.setTextColor(themeColor)
-            }
-        }
     }
 
-    /** 根据背景明暗自动切换标题和设置按钮颜色 */
     private fun applyTextColor() {
         val dark = AppSettings.isDarkBackground(context)
         if (dark) {
@@ -152,76 +137,67 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
         bgImageView.setImageDrawable(null)
         bgImageView.visibility = View.GONE
-        setBackgroundColor(Color.parseColor("#F0F2F5"))
+        setBackgroundColor(Color.parseColor("#E8EAED"))
         applyTextColor()
     }
 
     private fun createRouterCard(router: RouterStore.Router): View {
-        val showIp = AppSettings.getShowIp(context)
+        val show = router.showIp
+        val hasCredentials = router.username.isNotEmpty() || router.password.isNotEmpty()
 
-        // 外层卡片容器（带左侧彩色竖条）
+        // 外层卡片（玻璃拟态：半透明 + 边框 + 圆角 + 阴影，宽度稍窄）
         val card = FrameLayout(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
+                marginStart = dp(8)
+                marginEnd = dp(8)
                 bottomMargin = dp(16)
             }
-            elevation = dp(6).toFloat()
+            elevation = dp(8).toFloat()
         }
 
-        // 左侧彩色竖条
-        val accentBar = View(context).apply {
+        // 玻璃背景层
+        val glassBg = View(context).apply {
             layoutParams = FrameLayout.LayoutParams(
-                dp(5), ViewGroup.LayoutParams.MATCH_PARENT
-            ).apply {
-                gravity = Gravity.START
-            }
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(3).toFloat()
-                setColor(router.iconColor)
+                cornerRadius = dp(22).toFloat()
+                setColor(Color.parseColor("#70FFFFFF")) // 半透明白
+                setStroke(dp(1), Color.parseColor("#55FFFFFF")) // 半透明白边框
             }
         }
 
-        // 白色内容区
+        // 内容区
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(18), dp(20), dp(14), dp(20))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(20).toFloat()
-                setColor(Color.WHITE)
-            }
-            layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                marginStart = dp(3)
-            }
+            setPadding(dp(16), dp(18), dp(12), dp(18))
         }
 
-        // 圆形图标背景
+        // 圆形图标
         val iconContainer = FrameLayout(context).apply {
-            val size = dp(64)
+            val size = dp(58)
             layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                marginEnd = dp(16)
+                marginEnd = dp(14)
             }
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(router.iconColor)
             }
-            elevation = dp(3).toFloat()
+            elevation = dp(4).toFloat()
         }
 
         val icon = ImageView(context).apply {
-            val size = dp(32)
+            val size = dp(28)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
             setImageResource(R.drawable.ic_launcher_foreground)
             setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
         }
-        // 如果有自定义图标，用自定义图标
         if (router.customIconPath != null && File(router.customIconPath).exists()) {
             icon.setImageBitmap(BitmapFactory.decodeFile(router.customIconPath))
             icon.colorFilter = null
@@ -244,38 +220,83 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
 
         val urlText = TextView(context).apply {
-            text = if (showIp) router.url else "••••••••••••"
+            text = if (show) router.url else "地址：••••••••••••"
             textSize = 13f
-            setTextColor(Color.parseColor("#999999"))
-            setPadding(0, dp(4), 0, dp(10))
-        }
-
-        val enterText = TextView(context).apply {
-            text = "进入管理 →"
-            textSize = 14f
-            setTextColor(themeColor)
-            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.parseColor("#777777"))
+            setPadding(0, dp(3), 0, 0)
         }
 
         textLayout.addView(nameText)
         textLayout.addView(urlText)
+
+        // 账号密码行（如果有保存）
+        if (hasCredentials) {
+            val credText = TextView(context).apply {
+                val user = if (show && router.username.isNotEmpty()) router.username else "••••"
+                val pwd = if (show && router.password.isNotEmpty()) router.password else "••••"
+                text = "账号：$user  密码：$pwd"
+                textSize = 12f
+                setTextColor(Color.parseColor("#999999"))
+                setPadding(0, dp(6), 0, 0)
+            }
+            textLayout.addView(credText)
+        }
+
+        // 进入管理文字
+        val enterText = TextView(context).apply {
+            text = "进入管理 →"
+            textSize = 13f
+            setTextColor(themeColor)
+            setTypeface(null, Typeface.BOLD)
+            setPadding(0, dp(8), 0, 0)
+        }
         textLayout.addView(enterText)
+
+        // 右侧按钮区：眼睛 + 编辑
+        val btnLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                dp(40), ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        // 眼睛按钮（切换IP/密码显示隐藏）
+        val eyeBtn = TextView(context).apply {
+            val size = dp(32)
+            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                bottomMargin = dp(8)
+            }
+            text = if (show) "👁" else "🙈"
+            textSize = 16f
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#33000000"))
+            }
+            setOnClickListener {
+                toggleShowIp(router)
+            }
+        }
 
         // 编辑按钮
         val editBtn = ImageView(context).apply {
-            val size = dp(36)
+            val size = dp(32)
             layoutParams = LinearLayout.LayoutParams(size, size)
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#CCCCCC"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.parseColor("#AAAAAA"), PorterDuff.Mode.SRC_ATOP)
             setPadding(dp(6), dp(6), dp(6), dp(6))
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
+        btnLayout.addView(eyeBtn)
+        btnLayout.addView(editBtn)
+
         content.addView(iconContainer)
         content.addView(textLayout)
-        content.addView(editBtn)
+        content.addView(btnLayout)
 
-        card.addView(accentBar)
+        card.addView(glassBg)
         card.addView(content)
 
         card.setOnClickListener { onRouterClick?.invoke(router) }
@@ -285,6 +306,17 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
 
         return card
+    }
+
+    /** 切换单个路由器的IP/密码显示状态并保存 */
+    private fun toggleShowIp(router: RouterStore.Router) {
+        val index = routers.indexOfFirst { it.id == router.id }
+        if (index >= 0) {
+            val updated = router.copy(showIp = !router.showIp)
+            routers[index] = updated
+            RouterStore.saveRouters(context, routers)
+            refresh()
+        }
     }
 
     private fun dp(value: Int): Int {

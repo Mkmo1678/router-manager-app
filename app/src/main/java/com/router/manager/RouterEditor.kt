@@ -63,6 +63,22 @@ object RouterEditor {
             val pad = dp(activity, 12)
             setPadding(pad, pad, pad, pad)
         }
+        val usernameInput = EditText(activity).apply {
+            hint = "登录用户名（可选，保存后自动填充）"
+            setText(router?.username ?: "")
+            setSelection(text.length)
+            val pad = dp(activity, 12)
+            setPadding(pad, pad, pad, pad)
+        }
+        val passwordInput = EditText(activity).apply {
+            hint = "登录密码（可选，保存后自动填充）"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setText(router?.password ?: "")
+            setSelection(text.length)
+            val pad = dp(activity, 12)
+            setPadding(pad, pad, pad, pad)
+        }
 
         val iconPreview = ImageView(activity).apply {
             val size = dp(activity, 56)
@@ -85,6 +101,8 @@ object RouterEditor {
             )
             addView(nameInput)
             addView(urlInput)
+            addView(usernameInput)
+            addView(passwordInput)
         }
 
         val topLayout = LinearLayout(activity).apply {
@@ -133,7 +151,10 @@ object RouterEditor {
                     name = name,
                     url = url,
                     iconColor = editingIconColor,
-                    customIconPath = editingCustomIconPath
+                    customIconPath = editingCustomIconPath,
+                    username = usernameInput.text.toString().trim(),
+                    password = passwordInput.text.toString().trim(),
+                    showIp = router?.showIp ?: true
                 )
                 onSavedCallback?.invoke(finalRouter)
                 editIconPreview = null

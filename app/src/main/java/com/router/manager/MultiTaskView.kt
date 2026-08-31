@@ -17,8 +17,7 @@ import android.widget.TextView
 import java.io.File
 
 /**
- * 多任务页面：已打开的管理界面列表（精致卡片风格）
- * 支持主题色、背景图
+ * 多任务页面：已打开的管理界面列表（玻璃拟态卡片风格）
  */
 class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameLayout(context) {
 
@@ -36,7 +35,6 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
     private var themeColor: Int = AppSettings.defaultTheme
 
     init {
-        // 背景图层（最底层，CENTER_CROP 裁剪填满）
         bgImageView = ImageView(context).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -46,12 +44,11 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
 
         val scrollView = ScrollView(context).apply {
             isVerticalScrollBarEnabled = false
-            setPadding(0, 0, 0, 0)
         }
 
         contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), statusBarHeight + dp(12), dp(20), dp(140))
+            setPadding(dp(16), statusBarHeight + dp(12), dp(16), dp(140))
         }
 
         titleText = TextView(context).apply {
@@ -59,7 +56,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             textSize = 30f
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
-            setPadding(0, dp(8), 0, dp(6))
+            setPadding(dp(6), dp(8), 0, dp(6))
         }
         contentLayout.addView(titleText)
 
@@ -67,7 +64,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             text = "已打开的管理界面，点击切换，✕ 关闭"
             textSize = 13f
             setTextColor(Color.parseColor("#999999"))
-            setPadding(0, 0, 0, dp(20))
+            setPadding(dp(6), 0, 0, dp(20))
         }
         contentLayout.addView(subtitleText)
 
@@ -131,7 +128,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         }
         bgImageView.setImageDrawable(null)
         bgImageView.visibility = View.GONE
-        setBackgroundColor(Color.parseColor("#F0F2F5"))
+        setBackgroundColor(Color.parseColor("#E8EAED"))
         applyTextColor()
     }
 
@@ -150,30 +147,37 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
 
     private fun createTaskCard(router: RouterStore.Router): View {
         val isCurrent = router.id == currentRouterId
-        val showIp = AppSettings.getShowIp(context)
+        val show = router.showIp
 
-        // 外层卡片容器
+        // 外层卡片（玻璃拟态，宽度稍窄）
         val card = FrameLayout(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
+                marginStart = dp(8)
+                marginEnd = dp(8)
                 bottomMargin = dp(16)
             }
-            elevation = if (isCurrent) dp(8).toFloat() else dp(4).toFloat()
+            elevation = if (isCurrent) dp(10).toFloat() else dp(5).toFloat()
         }
 
-        // 左侧彩色竖条
-        val accentBar = View(context).apply {
+        // 玻璃背景层
+        val glassBg = View(context).apply {
             layoutParams = FrameLayout.LayoutParams(
-                dp(5), ViewGroup.LayoutParams.MATCH_PARENT
-            ).apply {
-                gravity = Gravity.START
-            }
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(3).toFloat()
-                setColor(if (isCurrent) themeColor else router.iconColor)
+                cornerRadius = dp(22).toFloat()
+                if (isCurrent) {
+                    setColor(Color.parseColor("#90FFFFFF"))
+                    setStroke(dp(2), themeColor)
+                } else {
+                    setColor(Color.parseColor("#70FFFFFF"))
+                    setStroke(dp(1), Color.parseColor("#55FFFFFF"))
+                }
             }
         }
 
@@ -181,31 +185,14 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(18), dp(18), dp(12), dp(18))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(20).toFloat()
-                setColor(
-                    if (isCurrent) AppSettings.lighten(themeColor, 0.92f)
-                    else Color.WHITE
-                )
-                if (isCurrent) {
-                    setStroke(dp(2), themeColor)
-                }
-            }
-            layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                marginStart = dp(3)
-            }
+            setPadding(dp(16), dp(16), dp(10), dp(16))
         }
 
         // 圆形图标
         val iconContainer = FrameLayout(context).apply {
-            val size = dp(52)
+            val size = dp(48)
             layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                marginEnd = dp(14)
+                marginEnd = dp(12)
             }
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
@@ -214,7 +201,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         }
 
         val icon = ImageView(context).apply {
-            val size = dp(26)
+            val size = dp(24)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
             setImageResource(R.drawable.ic_launcher_foreground)
             setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
@@ -235,7 +222,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
 
         val nameText = TextView(context).apply {
             text = if (isCurrent) "✓ ${router.name}" else router.name
-            textSize = 17f
+            textSize = 16f
             setTextColor(
                 if (isCurrent) themeColor else Color.parseColor("#1A1A1A")
             )
@@ -243,10 +230,10 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         }
 
         val urlText = TextView(context).apply {
-            text = if (showIp) router.url else "••••••••••••"
+            text = if (show) router.url else "地址：••••••••••••"
             textSize = 12f
             setTextColor(Color.parseColor("#999999"))
-            setPadding(0, dp(4), 0, 0)
+            setPadding(0, dp(3), 0, 0)
         }
 
         val statusText = TextView(context).apply {
@@ -256,7 +243,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
                 if (isCurrent) themeColor else Color.parseColor("#4CAF50")
             )
             setTypeface(null, Typeface.BOLD)
-            setPadding(0, dp(6), 0, 0)
+            setPadding(0, dp(5), 0, 0)
         }
 
         textLayout.addView(nameText)
@@ -266,8 +253,8 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         // 关闭按钮
         val closeBtn = TextView(context).apply {
             text = "✕"
-            textSize = 18f
-            setTextColor(Color.parseColor("#CCCCCC"))
+            textSize = 16f
+            setTextColor(Color.parseColor("#BBBBBB"))
             setPadding(dp(10), dp(6), dp(10), dp(6))
             setOnClickListener { onRouterClose?.invoke(router) }
         }
@@ -276,7 +263,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         content.addView(textLayout)
         content.addView(closeBtn)
 
-        card.addView(accentBar)
+        card.addView(glassBg)
         card.addView(content)
 
         card.setOnClickListener { onRouterClick?.invoke(router) }
