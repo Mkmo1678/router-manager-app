@@ -1,19 +1,9 @@
 <resources>
 
-    <style name="Theme.RouterManager" parent="android:Theme.Material.Light">
+    <style name="Theme.RouterManager" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@color/primary_dark</item>
-        <item name="android:navigationBarColor">@android:color/black</item>
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:actionBarStyle">@style/ActionBarStyle</item>
-    </style>
-
-    <style name="ActionBarStyle" parent="android:Widget.Material.Light.ActionBar.Solid">
-        <item name="android:background">@color/primary</item>
-        <item name="android:titleTextStyle">@style/ActionBarTitleText</item>
-    </style>
-
-    <style name="ActionBarTitleText" parent="android:TextAppearance.Material.Widget.ActionBar.Title">
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowBackground">@color/bg_gray</item>
     </style>
 
 </resources>
