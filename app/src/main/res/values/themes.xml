@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.RouterManager" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+</resources>

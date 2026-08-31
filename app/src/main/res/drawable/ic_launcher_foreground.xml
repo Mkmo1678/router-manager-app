@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 路由器机身 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,64 L78,64 L78,80 L30,80 Z" />
+
+    <!-- 左侧天线 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,64 L40,38 L46,38 L46,64 Z" />
+
+    <!-- 右侧天线 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,64 L62,38 L68,38 L68,64 Z" />
+
+    <!-- 顶部信号弧 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,34 A12,12 0 0,1 64,34 L62,34 A10,10 0 0,0 46,34 Z" />
+
+    <!-- 指示灯 -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M38,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M48,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M58,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M68,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+
+</vector>
