@@ -220,9 +220,34 @@ class MainActivity : android.app.Activity() {
         }
 
         contentContainer.removeAllViews()
-        contentContainer.addView(webView)
         // 管理界面隐藏底部导航
         bottomNav.visibility = View.GONE
+
+        // 管理界面容器：顶部半透明状态栏背景 + WebView（避免网页与状态栏重叠）
+        val webContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        // 状态栏背景条（半透明黑色，让状态栏图标始终清晰）
+        val statusBarBg = View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                statusBarHeight
+            )
+            setBackgroundColor(Color.parseColor("#99000000"))
+        }
+
+        // 复用 WebView 前先从旧父容器移除
+        (webView.parent as? ViewGroup)?.removeView(webView)
+
+        webContainer.addView(statusBarBg)
+        webContainer.addView(webView, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            0,
+            1f
+        ))
+
+        contentContainer.addView(webContainer)
         updateBottomNav()
     }
 
