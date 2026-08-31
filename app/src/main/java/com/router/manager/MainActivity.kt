@@ -51,6 +51,9 @@ class MainActivity : android.app.Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 状态栏主题色
+        applyStatusBarTheme()
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#F0F2F5"))
@@ -76,6 +79,7 @@ class MainActivity : android.app.Activity() {
             onRouterClick = { router -> openRouter(router) }
             onRouterEdit = { router -> editRouter(router) }
             onRouterDelete = { router -> confirmDeleteRouter(router) }
+            onSettingsClick = { showSettings() }
         }
 
         multiTaskView = MultiTaskView(this).apply {
@@ -116,6 +120,7 @@ class MainActivity : android.app.Activity() {
 
     private fun createNavButton(iconRes: Int, tab: Int): View {
         val isSelected = (currentTab == tab)
+        val themeColor = AppSettings.getThemeColor(this)
 
         val container = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -130,7 +135,7 @@ class MainActivity : android.app.Activity() {
             background = if (isSelected) {
                 GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
-                    setColor(Color.parseColor("#BBDEFB"))
+                    setColor(AppSettings.lighten(themeColor, 0.85f))
                 }
             } else null
         }
@@ -140,7 +145,7 @@ class MainActivity : android.app.Activity() {
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
             setImageResource(iconRes)
             setColorFilter(
-                if (isSelected) Color.parseColor("#1565C0")
+                if (isSelected) themeColor
                 else Color.parseColor("#9E9E9E"),
                 PorterDuff.Mode.SRC_ATOP
             )
@@ -173,6 +178,8 @@ class MainActivity : android.app.Activity() {
         currentTab = tab
         currentRouterId = null
         contentContainer.removeAllViews()
+        // 首页/多任务页显示底部导航
+        bottomNav.visibility = View.VISIBLE
 
         when (tab) {
             TAB_HOME -> {
@@ -200,6 +207,8 @@ class MainActivity : android.app.Activity() {
 
         contentContainer.removeAllViews()
         contentContainer.addView(webView)
+        // 管理界面隐藏底部导航，获得全屏体验
+        bottomNav.visibility = View.GONE
         updateBottomNav()
     }
 
@@ -258,6 +267,29 @@ class MainActivity : android.app.Activity() {
         } else if (currentTab == TAB_MULTI) {
             multiTaskView.update(openedRouters, null)
         }
+    }
+
+    // ─── 设置 ────────────────────────────────────────────
+
+    private fun showSettings() {
+        SettingsDialog.show(this) {
+            applySettings()
+        }
+    }
+
+    private fun applySettings() {
+        applyStatusBarTheme()
+        managerView.applyTheme()
+        managerView.applyBackground()
+        managerView.refresh()
+        multiTaskView.applyTheme()
+        multiTaskView.applyBackground()
+        updateBottomNav()
+    }
+
+    private fun applyStatusBarTheme() {
+        val themeColor = AppSettings.getThemeColor(this)
+        window.statusBarColor = AppSettings.darken(themeColor)
     }
 
     // ─── 路由器增删改 ────────────────────────────────────
@@ -337,7 +369,8 @@ class MainActivity : android.app.Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        RouterEditor.handleActivityResult(this, requestCode, resultCode, data)
+        if (RouterEditor.handleActivityResult(this, requestCode, resultCode, data)) return
+        SettingsDialog.handleActivityResult(this, requestCode, resultCode, data)
     }
 
     override fun onDestroy() {

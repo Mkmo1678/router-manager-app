@@ -1,9 +1,10 @@
 package com.router.manager
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.PorterDuff
 import android.graphics.Typeface
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
@@ -13,9 +14,11 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import java.io.File
 
 /**
  * 多任务页面：已打开的管理界面列表（卡片风格）
+ * 支持主题色、背景图
  */
 class MultiTaskView(context: Context) : FrameLayout(context) {
 
@@ -24,8 +27,10 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
 
     private val cardsContainer: LinearLayout
     private val emptyText: TextView
+    private val contentLayout: LinearLayout
     private var openedRouters: List<RouterStore.Router> = emptyList()
     private var currentRouterId: String? = null
+    private var themeColor: Int = AppSettings.defaultTheme
 
     init {
         val scrollView = ScrollView(context).apply {
@@ -33,7 +38,7 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             setPadding(0, dp(8), 0, dp(16))
         }
 
-        val content = LinearLayout(context).apply {
+        contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(8), dp(20), 0)
         }
@@ -45,7 +50,7 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             setTypeface(null, Typeface.BOLD)
             setPadding(0, dp(12), 0, dp(8))
         }
-        content.addView(title)
+        contentLayout.addView(title)
 
         val subtitle = TextView(context).apply {
             text = "已打开的管理界面，点击切换，✕ 关闭"
@@ -53,12 +58,12 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             setTextColor(Color.parseColor("#999999"))
             setPadding(0, 0, 0, dp(16))
         }
-        content.addView(subtitle)
+        contentLayout.addView(subtitle)
 
         cardsContainer = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
         }
-        content.addView(cardsContainer)
+        contentLayout.addView(cardsContainer)
 
         emptyText = TextView(context).apply {
             text = "暂无已打开的管理界面\n去首页打开一个路由器吧"
@@ -68,15 +73,19 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             setPadding(0, dp(60), 0, 0)
             visibility = View.GONE
         }
-        content.addView(emptyText)
+        contentLayout.addView(emptyText)
 
-        scrollView.addView(content)
+        scrollView.addView(contentLayout)
         addView(scrollView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+
+        themeColor = AppSettings.getThemeColor(context)
+        applyBackground()
     }
 
     fun update(opened: List<RouterStore.Router>, currentId: String?) {
         openedRouters = opened
         currentRouterId = currentId
+        themeColor = AppSettings.getThemeColor(context)
         cardsContainer.removeAllViews()
 
         if (opened.isEmpty()) {
@@ -89,6 +98,25 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
                 cardsContainer.addView(createTaskCard(router))
             }
         }
+    }
+
+    fun applyTheme() {
+        themeColor = AppSettings.getThemeColor(context)
+        update(openedRouters, currentRouterId)
+    }
+
+    fun applyBackground() {
+        val path = AppSettings.getBackgroundPath(context)
+        if (path != null && File(path).exists()) {
+            val bitmap = BitmapFactory.decodeFile(path)
+            if (bitmap != null) {
+                background = BitmapDrawable(resources, bitmap)
+                contentLayout.setBackgroundColor(Color.TRANSPARENT)
+                return
+            }
+        }
+        background = null
+        setBackgroundColor(Color.parseColor("#F0F2F5"))
     }
 
     private fun createTaskCard(router: RouterStore.Router): View {
@@ -127,8 +155,7 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             text = if (isCurrent) "✓ ${router.name}" else router.name
             textSize = 17f
             setTextColor(
-                if (isCurrent) Color.parseColor("#1565C0")
-                else Color.parseColor("#1A1A1A")
+                if (isCurrent) themeColor else Color.parseColor("#1A1A1A")
             )
             setTypeface(null, Typeface.BOLD)
         }
@@ -144,8 +171,7 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             text = if (isCurrent) "当前使用中" else "后台运行中"
             textSize = 12f
             setTextColor(
-                if (isCurrent) Color.parseColor("#1565C0")
-                else Color.parseColor("#4CAF50")
+                if (isCurrent) themeColor else Color.parseColor("#4CAF50")
             )
             setPadding(0, dp(6), 0, 0)
         }
@@ -176,11 +202,11 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = dp(16).toFloat()
             setColor(
-                if (isCurrent) Color.parseColor("#E3F2FD")
+                if (isCurrent) AppSettings.lighten(themeColor, 0.85f)
                 else Color.WHITE
             )
             if (isCurrent) {
-                setStroke(dp(2), Color.parseColor("#1565C0"))
+                setStroke(dp(2), themeColor)
             }
         }
     }

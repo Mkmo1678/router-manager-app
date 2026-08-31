@@ -1,9 +1,11 @@
 package com.router.manager
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.Typeface
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
@@ -13,18 +15,25 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import java.io.File
 
 /**
  * 首页：路由器列表（大卡片 + 大图标风格）
+ * 支持自定义标题、主题色、背景图
  */
 class RouterManagerView(context: Context) : FrameLayout(context) {
 
     var onRouterClick: ((RouterStore.Router) -> Unit)? = null
     var onRouterEdit: ((RouterStore.Router) -> Unit)? = null
     var onRouterDelete: ((RouterStore.Router) -> Unit)? = null
+    var onSettingsClick: (() -> Unit)? = null
 
     private val cardsContainer: LinearLayout
+    private val titleText: TextView
+    private val settingsBtn: ImageView
+    private val contentLayout: LinearLayout
     private var routers: MutableList<RouterStore.Router> = mutableListOf()
+    private var themeColor: Int = AppSettings.defaultTheme
 
     init {
         val scrollView = ScrollView(context).apply {
@@ -32,36 +41,89 @@ class RouterManagerView(context: Context) : FrameLayout(context) {
             setPadding(0, dp(8), 0, dp(16))
         }
 
-        val content = LinearLayout(context).apply {
+        contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(8), dp(20), 0)
         }
 
-        // 大标题
-        val title = TextView(context).apply {
-            text = "路由器管理"
+        // 标题栏：标题 + 设置按钮
+        val titleBar = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(12), 0, dp(20))
+        }
+
+        titleText = TextView(context).apply {
+            text = AppSettings.getTitle(context)
             textSize = 32f
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
-            setPadding(0, dp(12), 0, dp(20))
+            layoutParams = LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+            )
         }
-        content.addView(title)
+
+        settingsBtn = ImageView(context).apply {
+            val size = dp(36)
+            layoutParams = LinearLayout.LayoutParams(size, size)
+            setImageResource(R.drawable.ic_settings)
+            setColorFilter(Color.parseColor("#999999"), PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+            setOnClickListener { onSettingsClick?.invoke() }
+        }
+
+        titleBar.addView(titleText)
+        titleBar.addView(settingsBtn)
+        contentLayout.addView(titleBar)
 
         cardsContainer = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
         }
-        content.addView(cardsContainer)
+        contentLayout.addView(cardsContainer)
 
-        scrollView.addView(content)
+        scrollView.addView(contentLayout)
         addView(scrollView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+
+        applyTheme()
+        applyBackground()
     }
 
     fun refresh() {
         routers = RouterStore.loadRouters(context)
+        titleText.text = AppSettings.getTitle(context)
         cardsContainer.removeAllViews()
         for (router in routers) {
             cardsContainer.addView(createRouterCard(router))
         }
+    }
+
+    fun applyTheme() {
+        themeColor = AppSettings.getThemeColor(context)
+        settingsBtn.setColorFilter(themeColor, PorterDuff.Mode.SRC_ATOP)
+        // 刷新所有卡片的"进入管理"颜色
+        for (i in 0 until cardsContainer.childCount) {
+            val card = cardsContainer.getChildAt(i) as? LinearLayout
+            card?.let {
+                // 第三个子View是textLayout，里面第三个是enterText
+                val textLayout = it.getChildAt(1) as? LinearLayout
+                val enterText = textLayout?.getChildAt(2) as? TextView
+                enterText?.setTextColor(themeColor)
+            }
+        }
+    }
+
+    fun applyBackground() {
+        val path = AppSettings.getBackgroundPath(context)
+        if (path != null && File(path).exists()) {
+            val bitmap = BitmapFactory.decodeFile(path)
+            if (bitmap != null) {
+                background = BitmapDrawable(resources, bitmap)
+                contentLayout.setBackgroundColor(Color.TRANSPARENT)
+                return
+            }
+        }
+        background = null
+        setBackgroundColor(Color.parseColor("#F0F2F5"))
     }
 
     private fun createRouterCard(router: RouterStore.Router): View {
@@ -114,7 +176,7 @@ class RouterManagerView(context: Context) : FrameLayout(context) {
         val enterText = TextView(context).apply {
             text = "进入管理 →"
             textSize = 14f
-            setTextColor(Color.parseColor("#1565C0"))
+            setTextColor(themeColor)
             setTypeface(null, Typeface.BOLD)
         }
 
