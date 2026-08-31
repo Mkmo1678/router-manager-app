@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -26,6 +28,7 @@ jobs:
 
       - name: Build Debug APK
         run: |
+          echo "Git commits: $(git rev-list --count HEAD)"
           set +e
           gradle assembleDebug --no-daemon --stacktrace > build_log.txt 2>&1
           EXIT_CODE=$?
