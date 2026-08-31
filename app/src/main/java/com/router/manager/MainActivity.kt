@@ -121,7 +121,6 @@ class MainActivity : android.app.Activity() {
             layoutParams = LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.MATCH_PARENT, 1f
             )
-            gravity = Gravity.CENTER
         }
 
         // 选中背景（圆形）
