@@ -14,6 +14,13 @@ object AppSettings {
     private const val KEY_TITLE = "custom_title"
     private const val KEY_THEME_COLOR = "theme_color"
     private const val KEY_BACKGROUND_PATH = "background_path"
+    private const val KEY_UA_MODE = "ua_mode"
+
+    const val UA_MODE_MOBILE = 0
+    const val UA_MODE_DESKTOP = 1
+
+    /** 电脑端 Chrome User-Agent */
+    const val DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
     val defaultTheme = 0xFF1565C0.toInt() // 蓝
 
@@ -57,6 +64,21 @@ object AppSettings {
     fun setBackgroundPath(context: Context, path: String?) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().putString(KEY_BACKGROUND_PATH, path).apply()
+    }
+
+    fun getUaMode(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getInt(KEY_UA_MODE, UA_MODE_DESKTOP) // 默认电脑模式
+    }
+
+    fun setUaMode(context: Context, mode: Int) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putInt(KEY_UA_MODE, mode).apply()
+    }
+
+    /** 根据当前模式返回 User-Agent，mobileDefault 为 WebView 默认手机 UA */
+    fun getUserAgent(context: Context, mobileDefault: String): String {
+        return if (getUaMode(context) == UA_MODE_DESKTOP) DESKTOP_UA else mobileDefault
     }
 
     /** 颜色加深（用于状态栏） */

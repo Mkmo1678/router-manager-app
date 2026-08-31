@@ -51,6 +51,7 @@ class MainActivity : android.app.Activity() {
 
     private var statusBarHeight: Int = 0
     private var navBarHeight: Int = 0
+    private var defaultUserAgent: String? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -236,6 +237,14 @@ class MainActivity : android.app.Activity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             settings.apply {
+                // 保存默认手机 UA（仅第一次）
+                if (defaultUserAgent == null) {
+                    defaultUserAgent = userAgentString
+                }
+                userAgentString = AppSettings.getUserAgent(
+                    this@MainActivity,
+                    defaultUserAgent ?: userAgentString
+                )
                 javaScriptEnabled = true
                 domStorageEnabled = true
                 databaseEnabled = true
@@ -301,6 +310,15 @@ class MainActivity : android.app.Activity() {
         multiTaskView.applyTheme()
         multiTaskView.applyBackground()
         updateBottomNav()
+        // 更新所有已打开 WebView 的 UA 并刷新
+        val ua = AppSettings.getUserAgent(
+            this,
+            defaultUserAgent ?: System.getProperty("http.agent") ?: ""
+        )
+        webViewPool.values.forEach { webView ->
+            webView.settings.userAgentString = ua
+            webView.reload()
+        }
     }
 
     // ─── 关于 ────────────────────────────────────────────

@@ -32,8 +32,11 @@ object SettingsDialog {
     private var tempTitle: String = ""
     private var tempThemeColor: Int = AppSettings.defaultTheme
     private var tempBackgroundPath: String? = null
+    private var tempUaMode: Int = AppSettings.UA_MODE_DESKTOP
     private var bgPreview: ImageView? = null
     private var colorContainer: LinearLayout? = null
+    private var uaMobileBtn: Button? = null
+    private var uaDesktopBtn: Button? = null
     private var density: Float = 2f
     private var onChangedCallback: (() -> Unit)? = null
 
@@ -41,6 +44,7 @@ object SettingsDialog {
         tempTitle = AppSettings.getTitle(activity)
         tempThemeColor = AppSettings.getThemeColor(activity)
         tempBackgroundPath = AppSettings.getBackgroundPath(activity)
+        tempUaMode = AppSettings.getUaMode(activity)
         density = activity.resources.displayMetrics.density
         onChangedCallback = onChanged
 
@@ -148,6 +152,39 @@ object SettingsDialog {
             addView(bgBtnLayout)
         }
 
+        // UA 模式选择
+        val uaLabel = TextView(activity).apply {
+            text = "浏览器标识（UA）"
+            textSize = 14f
+            setTextColor(Color.parseColor("#666666"))
+            setPadding(dp(activity, 4), dp(activity, 12), 0, dp(activity, 4))
+        }
+
+        uaMobileBtn = Button(activity).apply {
+            text = "手机模式"
+            setOnClickListener {
+                tempUaMode = AppSettings.UA_MODE_MOBILE
+                updateUaButtons(activity)
+            }
+        }
+
+        uaDesktopBtn = Button(activity).apply {
+            text = "电脑模式"
+            setOnClickListener {
+                tempUaMode = AppSettings.UA_MODE_DESKTOP
+                updateUaButtons(activity)
+            }
+        }
+
+        val uaBtnRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(uaMobileBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = dp(activity, 8)
+            })
+            addView(uaDesktopBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        }
+        updateUaButtons(activity)
+
         val content = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(activity, 20), dp(activity, 16), dp(activity, 20), dp(activity, 8))
@@ -157,6 +194,8 @@ object SettingsDialog {
             addView(colorScroll)
             addView(bgLabel)
             addView(bgRow)
+            addView(uaLabel)
+            addView(uaBtnRow)
         }
 
         AlertDialog.Builder(activity)
@@ -169,6 +208,7 @@ object SettingsDialog {
                 }
                 AppSettings.setThemeColor(activity, tempThemeColor)
                 AppSettings.setBackgroundPath(activity, tempBackgroundPath)
+                AppSettings.setUaMode(activity, tempUaMode)
                 onChangedCallback?.invoke()
                 cleanup()
                 Toast.makeText(activity, "设置已保存", Toast.LENGTH_SHORT).show()
@@ -251,9 +291,21 @@ object SettingsDialog {
         }
     }
 
+    private fun updateUaButtons(activity: Activity) {
+        val selected = AppSettings.lighten(AppSettings.getThemeColor(activity), 0.85f)
+        uaMobileBtn?.setBackgroundColor(
+            if (tempUaMode == AppSettings.UA_MODE_MOBILE) selected else Color.parseColor("#EEEEEE")
+        )
+        uaDesktopBtn?.setBackgroundColor(
+            if (tempUaMode == AppSettings.UA_MODE_DESKTOP) selected else Color.parseColor("#EEEEEE")
+        )
+    }
+
     private fun cleanup() {
         bgPreview = null
         colorContainer = null
+        uaMobileBtn = null
+        uaDesktopBtn = null
         onChangedCallback = null
     }
 
