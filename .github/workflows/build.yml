@@ -25,7 +25,20 @@ jobs:
           gradle-version: '8.7'
 
       - name: Build Debug APK
-        run: gradle assembleDebug --no-daemon
+        run: |
+          set +e
+          gradle assembleDebug --no-daemon --stacktrace > build_log.txt 2>&1
+          EXIT_CODE=$?
+          cat build_log.txt
+          exit $EXIT_CODE
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build_log.txt
+          retention-days: 7
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
