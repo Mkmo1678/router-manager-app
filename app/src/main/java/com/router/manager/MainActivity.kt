@@ -19,6 +19,7 @@ import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import java.io.File
 
@@ -28,6 +29,7 @@ class MainActivity : android.app.Activity() {
         private const val TAB_HOME = 0
         private const val TAB_MULTI = 1
         private const val TAB_WEB = 2
+        private const val TAB_ABOUT = 3
     }
 
     private lateinit var contentContainer: FrameLayout
@@ -47,42 +49,63 @@ class MainActivity : android.app.Activity() {
     /** 当前标签页 */
     private var currentTab = TAB_HOME
 
+    private var statusBarHeight: Int = 0
+    private var navBarHeight: Int = 0
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 状态栏主题色
-        applyStatusBarTheme()
+        // 获取系统栏高度
+        statusBarHeight = getStatusBarHeight()
+        navBarHeight = getNavBarHeight()
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#F0F2F5"))
-        }
+        // 沉浸式：内容延伸到状态栏和导航栏后面
+        window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            )
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
 
-        // 内容区
+        // 根布局用 FrameLayout，让 bottomNav 浮在内容上
+        val root = FrameLayout(this)
+
+        // 内容区（填满整个屏幕，包括状态栏和导航栏后面）
         contentContainer = FrameLayout(this)
         root.addView(
             contentContainer,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
 
-        // 底部导航
+        // 底部导航（浮在底部）
         bottomNav = createBottomNav()
-        root.addView(bottomNav)
+        val bottomNavLp = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.BOTTOM
+            marginStart = dp(16)
+            marginEnd = dp(16)
+            bottomMargin = navBarHeight + dp(10)
+        }
+        root.addView(bottomNav, bottomNavLp)
 
         setContentView(root)
 
         // 初始化页面
-        managerView = RouterManagerView(this).apply {
+        managerView = RouterManagerView(this, statusBarHeight).apply {
             onRouterClick = { router -> openRouter(router) }
             onRouterEdit = { router -> editRouter(router) }
             onRouterDelete = { router -> confirmDeleteRouter(router) }
             onSettingsClick = { showSettings() }
         }
 
-        multiTaskView = MultiTaskView(this).apply {
+        multiTaskView = MultiTaskView(this, statusBarHeight).apply {
             onRouterClick = { router -> openRouter(router) }
             onRouterClose = { router -> closeRouter(router) }
         }
@@ -96,25 +119,14 @@ class MainActivity : android.app.Activity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(8), dp(6), dp(8), dp(6))
+            setPadding(dp(6), dp(8), dp(6), dp(8))
+            // 半透明白色背景 + 圆角
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(28).toFloat()
-                setColor(Color.WHITE)
+                setColor(Color.parseColor("#E6FFFFFF")) // 90% 不透明白色
             }
-            elevation = dp(8).toFloat()
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(60)
-            ).apply {
-                marginStart = dp(16)
-                marginEnd = dp(16)
-                bottomMargin = dp(14)
-            }
-
-            addView(createNavButton(R.drawable.ic_nav_home, TAB_HOME))
-            addView(createNavButton(R.drawable.ic_nav_windows, TAB_MULTI))
-            addView(createNavButton(R.drawable.ic_nav_add, -1)) // -1 表示操作按钮，不选中
+            elevation = dp(12).toFloat()
         }
     }
 
@@ -124,13 +136,13 @@ class MainActivity : android.app.Activity() {
 
         val container = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f
+                0, dp(48), 1f
             )
         }
 
         // 选中背景（圆形）
         val bg = View(this).apply {
-            val size = dp(44)
+            val size = dp(40)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
             background = if (isSelected) {
                 GradientDrawable().apply {
@@ -141,12 +153,12 @@ class MainActivity : android.app.Activity() {
         }
 
         val icon = ImageView(this).apply {
-            val size = dp(24)
+            val size = dp(22)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
             setImageResource(iconRes)
             setColorFilter(
                 if (isSelected) themeColor
-                else Color.parseColor("#9E9E9E"),
+                else Color.parseColor("#888888"),
                 PorterDuff.Mode.SRC_ATOP
             )
         }
@@ -155,10 +167,14 @@ class MainActivity : android.app.Activity() {
         container.addView(icon)
 
         container.setOnClickListener {
-            if (tab == -1) {
-                addRouter()
-            } else {
-                switchTab(tab)
+            when (tab) {
+                TAB_HOME -> switchTab(TAB_HOME)
+                TAB_MULTI -> switchTab(TAB_MULTI)
+                TAB_ABOUT -> showAbout()
+                else -> {
+                    // 添加按钮
+                    addRouter()
+                }
             }
         }
 
@@ -169,7 +185,8 @@ class MainActivity : android.app.Activity() {
         bottomNav.removeAllViews()
         bottomNav.addView(createNavButton(R.drawable.ic_nav_home, TAB_HOME))
         bottomNav.addView(createNavButton(R.drawable.ic_nav_windows, TAB_MULTI))
-        bottomNav.addView(createNavButton(R.drawable.ic_nav_add, -1))
+        bottomNav.addView(createNavButton(R.drawable.ic_nav_add, -1)) // -1 = 添加
+        bottomNav.addView(createNavButton(R.drawable.ic_about, TAB_ABOUT))
     }
 
     // ─── 页面切换 ────────────────────────────────────────
@@ -207,7 +224,7 @@ class MainActivity : android.app.Activity() {
 
         contentContainer.removeAllViews()
         contentContainer.addView(webView)
-        // 管理界面隐藏底部导航，获得全屏体验
+        // 管理界面隐藏底部导航
         bottomNav.visibility = View.GONE
         updateBottomNav()
     }
@@ -278,7 +295,6 @@ class MainActivity : android.app.Activity() {
     }
 
     private fun applySettings() {
-        applyStatusBarTheme()
         managerView.applyTheme()
         managerView.applyBackground()
         managerView.refresh()
@@ -287,9 +303,33 @@ class MainActivity : android.app.Activity() {
         updateBottomNav()
     }
 
-    private fun applyStatusBarTheme() {
-        val themeColor = AppSettings.getThemeColor(this)
-        window.statusBarColor = AppSettings.darken(themeColor)
+    // ─── 关于 ────────────────────────────────────────────
+
+    private fun showAbout() {
+        val versionName = try {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (_: Exception) {
+            "1.0"
+        }
+
+        val message = """
+            使用说明：
+            1. 底部「+」添加路由器，输入名称和管理地址
+            2. 点击路由器卡片进入管理界面，登录状态自动保存
+            3. 底部「多任务」查看已打开的管理界面，可切换或关闭
+            4. 首页右上角齿轮可自定义标题、主题色、背景图
+            5. 管理界面按返回键回首页，登录状态不丢失
+            6. 长按路由器卡片可删除
+
+            作者：burry默默
+            版本：$versionName
+        """.trimIndent()
+
+        AlertDialog.Builder(this)
+            .setTitle("关于")
+            .setMessage(message)
+            .setPositiveButton("确定", null)
+            .show()
     }
 
     // ─── 路由器增删改 ────────────────────────────────────
@@ -349,6 +389,18 @@ class MainActivity : android.app.Activity() {
             }
             .setNegativeButton("取消", null)
             .show()
+    }
+
+    // ─── 系统栏高度 ──────────────────────────────────────
+
+    private fun getStatusBarHeight(): Int {
+        val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else dp(24)
+    }
+
+    private fun getNavBarHeight(): Int {
+        val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else dp(48)
     }
 
     // ─── 返回键 / 生命周期 ───────────────────────────────

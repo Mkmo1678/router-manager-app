@@ -20,7 +20,7 @@ import java.io.File
  * 首页：路由器列表（大卡片 + 大图标风格）
  * 支持自定义标题、主题色、背景图
  */
-class RouterManagerView(context: Context) : FrameLayout(context) {
+class RouterManagerView(context: Context, private val statusBarHeight: Int) : FrameLayout(context) {
 
     var onRouterClick: ((RouterStore.Router) -> Unit)? = null
     var onRouterEdit: ((RouterStore.Router) -> Unit)? = null
@@ -46,12 +46,13 @@ class RouterManagerView(context: Context) : FrameLayout(context) {
 
         val scrollView = ScrollView(context).apply {
             isVerticalScrollBarEnabled = false
-            setPadding(0, dp(8), 0, dp(16))
+            setPadding(0, 0, 0, 0)
         }
 
         contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(8), dp(20), 0)
+            // 顶部留出状态栏高度，底部留出导航栏+底部导航高度
+            setPadding(dp(20), statusBarHeight + dp(8), dp(20), dp(140))
         }
 
         // 标题栏：标题 + 设置按钮

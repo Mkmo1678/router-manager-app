@@ -19,7 +19,7 @@ import java.io.File
  * 多任务页面：已打开的管理界面列表（卡片风格）
  * 支持主题色、背景图
  */
-class MultiTaskView(context: Context) : FrameLayout(context) {
+class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameLayout(context) {
 
     var onRouterClick: ((RouterStore.Router) -> Unit)? = null
     var onRouterClose: ((RouterStore.Router) -> Unit)? = null
@@ -45,12 +45,13 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
 
         val scrollView = ScrollView(context).apply {
             isVerticalScrollBarEnabled = false
-            setPadding(0, dp(8), 0, dp(16))
+            setPadding(0, 0, 0, 0)
         }
 
         contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(8), dp(20), 0)
+            // 顶部留出状态栏高度，底部留出导航栏+底部导航高度
+            setPadding(dp(20), statusBarHeight + dp(8), dp(20), dp(140))
         }
 
         titleText = TextView(context).apply {

@@ -3,6 +3,21 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+fun getGitCommitCount(): Int {
+    return try {
+        val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+            .redirectErrorStream(true)
+            .start()
+        val output = process.inputStream.bufferedReader().readText().trim()
+        process.waitFor()
+        output.toInt()
+    } catch (e: Exception) {
+        1
+    }
+}
+
+val commitCount = getGitCommitCount()
+
 android {
     namespace = "com.router.manager"
     compileSdk = 34
@@ -11,8 +26,8 @@ android {
         applicationId = "com.router.manager"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = commitCount
+        versionName = "1.0.$commitCount"
     }
 
     buildTypes {
