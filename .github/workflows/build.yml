@@ -30,12 +30,12 @@ jobs:
           gradle assembleDebug --no-daemon --stacktrace > build_log.txt 2>&1
           EXIT_CODE=$?
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== BUILD FAILED, extracting errors ==="
-            grep -iE "error:|FAILURE:|What went wrong:|Caused by:" build_log.txt | head -30 | while IFS= read -r line; do
+            echo "=== BUILD FAILED ==="
+            grep -nE "^e: |^w: |error:|FAILURE:|What went wrong:|Caused by:|> Task .*FAILED" build_log.txt | head -50 | while IFS= read -r line; do
               echo "::error::${line}"
             done
-            echo "=== LAST 80 LINES ==="
-            tail -80 build_log.txt
+            echo "=== LAST 150 LINES ==="
+            tail -150 build_log.txt
           fi
           exit $EXIT_CODE
 
