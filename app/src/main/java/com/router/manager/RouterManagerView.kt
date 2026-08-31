@@ -158,7 +158,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             elevation = dp(8).toFloat()
         }
 
-        // 玻璃背景层
+        // 玻璃背景层（高不透明度确保文字清晰）
         val glassBg = View(context).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -167,8 +167,8 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(22).toFloat()
-                setColor(Color.parseColor("#70FFFFFF")) // 半透明白
-                setStroke(dp(1), Color.parseColor("#55FFFFFF")) // 半透明白边框
+                setColor(Color.parseColor("#D8FFFFFF")) // 85% 不透明白，玻璃感+清晰
+                setStroke(dp(1), Color.parseColor("#80FFFFFF")) // 半透明白边框
             }
         }
 
@@ -222,7 +222,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         val urlText = TextView(context).apply {
             text = if (show) router.url else "地址：••••••••••••"
             textSize = 13f
-            setTextColor(Color.parseColor("#777777"))
+            setTextColor(Color.parseColor("#555555"))
             setPadding(0, dp(3), 0, 0)
         }
 
@@ -236,7 +236,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 val pwd = if (show && router.password.isNotEmpty()) router.password else "••••"
                 text = "账号：$user  密码：$pwd"
                 textSize = 12f
-                setTextColor(Color.parseColor("#999999"))
+                setTextColor(Color.parseColor("#777777"))
                 setPadding(0, dp(6), 0, 0)
             }
             textLayout.addView(credText)
@@ -261,18 +261,18 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             )
         }
 
-        // 眼睛按钮（切换IP/密码显示隐藏）
-        val eyeBtn = TextView(context).apply {
-            val size = dp(32)
+        // 眼睛按钮（切换IP/密码显示隐藏）- 自定义矢量图标
+        val eyeBtn = ImageView(context).apply {
+            val size = dp(34)
             layoutParams = LinearLayout.LayoutParams(size, size).apply {
                 bottomMargin = dp(8)
             }
-            text = if (show) "👁" else "🙈"
-            textSize = 16f
-            gravity = Gravity.CENTER
+            setImageResource(if (show) R.drawable.ic_eye else R.drawable.ic_eye_off)
+            setColorFilter(Color.parseColor("#555555"), PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(7), dp(7), dp(7), dp(7))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.parseColor("#33000000"))
+                setColor(Color.parseColor("#22000000"))
             }
             setOnClickListener {
                 toggleShowIp(router)

@@ -162,7 +162,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             elevation = if (isCurrent) dp(10).toFloat() else dp(5).toFloat()
         }
 
-        // 玻璃背景层
+        // 玻璃背景层（高不透明度确保文字清晰）
         val glassBg = View(context).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -172,11 +172,11 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(22).toFloat()
                 if (isCurrent) {
-                    setColor(Color.parseColor("#90FFFFFF"))
+                    setColor(Color.parseColor("#E0FFFFFF"))
                     setStroke(dp(2), themeColor)
                 } else {
-                    setColor(Color.parseColor("#70FFFFFF"))
-                    setStroke(dp(1), Color.parseColor("#55FFFFFF"))
+                    setColor(Color.parseColor("#D8FFFFFF")) // 85% 不透明白
+                    setStroke(dp(1), Color.parseColor("#80FFFFFF"))
                 }
             }
         }
@@ -232,7 +232,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         val urlText = TextView(context).apply {
             text = if (show) router.url else "地址：••••••••••••"
             textSize = 12f
-            setTextColor(Color.parseColor("#999999"))
+            setTextColor(Color.parseColor("#666666"))
             setPadding(0, dp(3), 0, 0)
         }
 
