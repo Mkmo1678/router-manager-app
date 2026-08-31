@@ -61,12 +61,8 @@ class MainActivity : android.app.Activity() {
         statusBarHeight = getStatusBarHeight()
         navBarHeight = getNavBarHeight()
 
-        // 沉浸式：内容延伸到状态栏和导航栏后面
-        window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            )
+        // 沉浸式：内容延伸到状态栏和导航栏后面，状态栏图标颜色随背景自动切换
+        applyImmersiveFlags()
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
 
@@ -304,6 +300,7 @@ class MainActivity : android.app.Activity() {
     }
 
     private fun applySettings() {
+        applyImmersiveFlags()
         managerView.applyTheme()
         managerView.applyBackground()
         managerView.refresh()
@@ -318,6 +315,21 @@ class MainActivity : android.app.Activity() {
         webViewPool.values.forEach { webView ->
             webView.settings.userAgentString = ua
             webView.reload()
+        }
+    }
+
+    /** 根据背景明暗自动切换状态栏图标颜色（暗背景白字，亮背景黑字） */
+    private fun applyImmersiveFlags() {
+        val baseFlags = (
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            )
+        val dark = AppSettings.isDarkBackground(this)
+        window.decorView.systemUiVisibility = if (dark) {
+            baseFlags // 暗色背景，状态栏图标保持白色
+        } else {
+            baseFlags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR // 亮色背景，状态栏图标变深
         }
     }
 
