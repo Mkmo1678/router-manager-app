@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
@@ -30,11 +29,20 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
     private val titleText: TextView
     private val subtitleText: TextView
     private val contentLayout: LinearLayout
+    private val bgImageView: ImageView
     private var openedRouters: List<RouterStore.Router> = emptyList()
     private var currentRouterId: String? = null
     private var themeColor: Int = AppSettings.defaultTheme
 
     init {
+        // 背景图层（最底层，CENTER_CROP 裁剪填满）
+        bgImageView = ImageView(context).apply {
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+            visibility = View.GONE
+        }
+        addView(bgImageView)
+
         val scrollView = ScrollView(context).apply {
             isVerticalScrollBarEnabled = false
             setPadding(0, dp(8), 0, dp(16))
@@ -112,13 +120,16 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
         if (path != null && File(path).exists()) {
             val bitmap = BitmapFactory.decodeFile(path)
             if (bitmap != null) {
-                background = BitmapDrawable(resources, bitmap)
+                bgImageView.setImageBitmap(bitmap)
+                bgImageView.visibility = View.VISIBLE
+                setBackgroundColor(Color.TRANSPARENT)
                 contentLayout.setBackgroundColor(Color.TRANSPARENT)
                 applyTextColor()
                 return
             }
         }
-        background = null
+        bgImageView.setImageDrawable(null)
+        bgImageView.visibility = View.GONE
         setBackgroundColor(Color.parseColor("#F0F2F5"))
         applyTextColor()
     }
