@@ -33,10 +33,13 @@ object SettingsDialog {
     private var tempThemeColor: Int = AppSettings.defaultTheme
     private var tempBackgroundPath: String? = null
     private var tempUaMode: Int = AppSettings.UA_MODE_DESKTOP
+    private var tempShowIp: Boolean = true
     private var bgPreview: ImageView? = null
     private var colorContainer: LinearLayout? = null
     private var uaMobileBtn: Button? = null
     private var uaDesktopBtn: Button? = null
+    private var ipShowBtn: Button? = null
+    private var ipHideBtn: Button? = null
     private var density: Float = 2f
     private var onChangedCallback: (() -> Unit)? = null
 
@@ -45,6 +48,7 @@ object SettingsDialog {
         tempThemeColor = AppSettings.getThemeColor(activity)
         tempBackgroundPath = AppSettings.getBackgroundPath(activity)
         tempUaMode = AppSettings.getUaMode(activity)
+        tempShowIp = AppSettings.getShowIp(activity)
         density = activity.resources.displayMetrics.density
         onChangedCallback = onChanged
 
@@ -185,6 +189,39 @@ object SettingsDialog {
         }
         updateUaButtons(activity)
 
+        // IP 地址显示开关
+        val ipLabel = TextView(activity).apply {
+            text = "IP地址显示"
+            textSize = 14f
+            setTextColor(Color.parseColor("#666666"))
+            setPadding(dp(activity, 4), dp(activity, 12), 0, dp(activity, 4))
+        }
+
+        ipShowBtn = Button(activity).apply {
+            text = "显示地址"
+            setOnClickListener {
+                tempShowIp = true
+                updateIpButtons(activity)
+            }
+        }
+
+        ipHideBtn = Button(activity).apply {
+            text = "隐藏地址"
+            setOnClickListener {
+                tempShowIp = false
+                updateIpButtons(activity)
+            }
+        }
+
+        val ipBtnRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(ipShowBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = dp(activity, 8)
+            })
+            addView(ipHideBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        }
+        updateIpButtons(activity)
+
         val content = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(activity, 20), dp(activity, 16), dp(activity, 20), dp(activity, 8))
@@ -196,6 +233,8 @@ object SettingsDialog {
             addView(bgRow)
             addView(uaLabel)
             addView(uaBtnRow)
+            addView(ipLabel)
+            addView(ipBtnRow)
         }
 
         AlertDialog.Builder(activity)
@@ -209,6 +248,7 @@ object SettingsDialog {
                 AppSettings.setThemeColor(activity, tempThemeColor)
                 AppSettings.setBackgroundPath(activity, tempBackgroundPath)
                 AppSettings.setUaMode(activity, tempUaMode)
+                AppSettings.setShowIp(activity, tempShowIp)
                 onChangedCallback?.invoke()
                 cleanup()
                 Toast.makeText(activity, "设置已保存", Toast.LENGTH_SHORT).show()
@@ -301,11 +341,23 @@ object SettingsDialog {
         )
     }
 
+    private fun updateIpButtons(activity: Activity) {
+        val selected = AppSettings.lighten(AppSettings.getThemeColor(activity), 0.85f)
+        ipShowBtn?.setBackgroundColor(
+            if (tempShowIp) selected else Color.parseColor("#EEEEEE")
+        )
+        ipHideBtn?.setBackgroundColor(
+            if (!tempShowIp) selected else Color.parseColor("#EEEEEE")
+        )
+    }
+
     private fun cleanup() {
         bgPreview = null
         colorContainer = null
         uaMobileBtn = null
         uaDesktopBtn = null
+        ipShowBtn = null
+        ipHideBtn = null
         onChangedCallback = null
     }
 

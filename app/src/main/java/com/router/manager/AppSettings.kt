@@ -15,6 +15,7 @@ object AppSettings {
     private const val KEY_THEME_COLOR = "theme_color"
     private const val KEY_BACKGROUND_PATH = "background_path"
     private const val KEY_UA_MODE = "ua_mode"
+    private const val KEY_SHOW_IP = "show_ip"
 
     const val UA_MODE_MOBILE = 0
     const val UA_MODE_DESKTOP = 1
@@ -79,6 +80,16 @@ object AppSettings {
     /** 根据当前模式返回 User-Agent，mobileDefault 为 WebView 默认手机 UA */
     fun getUserAgent(context: Context, mobileDefault: String): String {
         return if (getUaMode(context) == UA_MODE_DESKTOP) DESKTOP_UA else mobileDefault
+    }
+
+    fun getShowIp(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_SHOW_IP, true) // 默认显示
+    }
+
+    fun setShowIp(context: Context, show: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_SHOW_IP, show).apply()
     }
 
     /** 颜色加深（用于状态栏） */

@@ -3,6 +3,7 @@ package com.router.manager
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.PorterDuff
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -16,7 +17,7 @@ import android.widget.TextView
 import java.io.File
 
 /**
- * 多任务页面：已打开的管理界面列表（卡片风格）
+ * 多任务页面：已打开的管理界面列表（精致卡片风格）
  * 支持主题色、背景图
  */
 class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameLayout(context) {
@@ -50,16 +51,15 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
 
         contentLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            // 顶部留出状态栏高度，底部留出导航栏+底部导航高度
-            setPadding(dp(20), statusBarHeight + dp(8), dp(20), dp(140))
+            setPadding(dp(20), statusBarHeight + dp(12), dp(20), dp(140))
         }
 
         titleText = TextView(context).apply {
             text = "多任务"
-            textSize = 32f
+            textSize = 30f
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
-            setPadding(0, dp(12), 0, dp(8))
+            setPadding(0, dp(8), 0, dp(6))
         }
         contentLayout.addView(titleText)
 
@@ -67,7 +67,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             text = "已打开的管理界面，点击切换，✕ 关闭"
             textSize = 13f
             setTextColor(Color.parseColor("#999999"))
-            setPadding(0, 0, 0, dp(16))
+            setPadding(0, 0, 0, dp(20))
         }
         contentLayout.addView(subtitleText)
 
@@ -135,7 +135,6 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         applyTextColor()
     }
 
-    /** 根据背景明暗自动切换标题、副标题、空状态文字颜色 */
     private fun applyTextColor() {
         val dark = AppSettings.isDarkBackground(context)
         if (dark) {
@@ -151,29 +150,82 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
 
     private fun createTaskCard(router: RouterStore.Router): View {
         val isCurrent = router.id == currentRouterId
+        val showIp = AppSettings.getShowIp(context)
 
-        val card = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(16), dp(16), dp(12), dp(16))
-            background = createCardBackground(isCurrent)
-            elevation = dp(2).toFloat()
+        // 外层卡片容器
+        val card = FrameLayout(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
-                bottomMargin = dp(14)
+                bottomMargin = dp(16)
+            }
+            elevation = if (isCurrent) dp(8).toFloat() else dp(4).toFloat()
+        }
+
+        // 左侧彩色竖条
+        val accentBar = View(context).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                dp(5), ViewGroup.LayoutParams.MATCH_PARENT
+            ).apply {
+                gravity = Gravity.START
+            }
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(3).toFloat()
+                setColor(if (isCurrent) themeColor else router.iconColor)
+            }
+        }
+
+        // 内容区
+        val content = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(18), dp(18), dp(12), dp(18))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(20).toFloat()
+                setColor(
+                    if (isCurrent) AppSettings.lighten(themeColor, 0.92f)
+                    else Color.WHITE
+                )
+                if (isCurrent) {
+                    setStroke(dp(2), themeColor)
+                }
+            }
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginStart = dp(3)
+            }
+        }
+
+        // 圆形图标
+        val iconContainer = FrameLayout(context).apply {
+            val size = dp(52)
+            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                marginEnd = dp(14)
+            }
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(router.iconColor)
             }
         }
 
         val icon = ImageView(context).apply {
-            val size = dp(56)
-            layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                marginEnd = dp(14)
-            }
-            setImageDrawable(RouterStore.getIconDrawable(context, router))
+            val size = dp(26)
+            layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
+            setImageResource(R.drawable.ic_launcher_foreground)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
         }
+        if (router.customIconPath != null && File(router.customIconPath).exists()) {
+            icon.setImageBitmap(BitmapFactory.decodeFile(router.customIconPath))
+            icon.colorFilter = null
+        }
+        iconContainer.addView(icon)
 
+        // 文字区
         val textLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(
@@ -191,7 +243,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         }
 
         val urlText = TextView(context).apply {
-            text = router.url
+            text = if (showIp) router.url else "••••••••••••"
             textSize = 12f
             setTextColor(Color.parseColor("#999999"))
             setPadding(0, dp(4), 0, 0)
@@ -203,6 +255,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             setTextColor(
                 if (isCurrent) themeColor else Color.parseColor("#4CAF50")
             )
+            setTypeface(null, Typeface.BOLD)
             setPadding(0, dp(6), 0, 0)
         }
 
@@ -210,35 +263,25 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         textLayout.addView(urlText)
         textLayout.addView(statusText)
 
+        // 关闭按钮
         val closeBtn = TextView(context).apply {
             text = "✕"
-            textSize = 20f
+            textSize = 18f
             setTextColor(Color.parseColor("#CCCCCC"))
             setPadding(dp(10), dp(6), dp(10), dp(6))
             setOnClickListener { onRouterClose?.invoke(router) }
         }
 
-        card.addView(icon)
-        card.addView(textLayout)
-        card.addView(closeBtn)
+        content.addView(iconContainer)
+        content.addView(textLayout)
+        content.addView(closeBtn)
+
+        card.addView(accentBar)
+        card.addView(content)
 
         card.setOnClickListener { onRouterClick?.invoke(router) }
 
         return card
-    }
-
-    private fun createCardBackground(isCurrent: Boolean): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(16).toFloat()
-            setColor(
-                if (isCurrent) AppSettings.lighten(themeColor, 0.85f)
-                else Color.WHITE
-            )
-            if (isCurrent) {
-                setStroke(dp(2), themeColor)
-            }
-        }
     }
 
     private fun dp(value: Int): Int {

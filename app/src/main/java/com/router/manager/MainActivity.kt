@@ -116,14 +116,14 @@ class MainActivity : android.app.Activity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(6), dp(8), dp(6), dp(8))
-            // 半透明白色背景 + 圆角
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            // 毛玻璃效果：半透明白色 + 大圆角 + 柔和阴影
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(28).toFloat()
-                setColor(Color.parseColor("#E6FFFFFF")) // 90% 不透明白色
+                cornerRadius = dp(32).toFloat()
+                setColor(Color.parseColor("#EBFFFFFF")) // 92% 不透明白色
             }
-            elevation = dp(12).toFloat()
+            elevation = dp(16).toFloat()
         }
     }
 
@@ -133,28 +133,28 @@ class MainActivity : android.app.Activity() {
 
         val container = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
-                0, dp(48), 1f
+                0, dp(52), 1f
             )
         }
 
-        // 选中背景（圆形）
+        // 选中背景（主题色圆形）
         val bg = View(this).apply {
-            val size = dp(40)
+            val size = dp(42)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
             background = if (isSelected) {
                 GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
-                    setColor(AppSettings.lighten(themeColor, 0.85f))
+                    setColor(themeColor)
                 }
             } else null
         }
 
         val icon = ImageView(this).apply {
-            val size = dp(22)
+            val size = if (isSelected) dp(24) else dp(22)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
             setImageResource(iconRes)
             setColorFilter(
-                if (isSelected) themeColor
+                if (isSelected) Color.WHITE
                 else Color.parseColor("#888888"),
                 PorterDuff.Mode.SRC_ATOP
             )
