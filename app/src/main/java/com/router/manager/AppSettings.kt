@@ -1,6 +1,8 @@
 package com.router.manager
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import java.io.File
 
 /**
@@ -71,5 +73,36 @@ object AppSettings {
         val g = 255 - (255 - ((color shr 8) and 0xFF)) * factor
         val b = 255 - (255 - (color and 0xFF)) * factor
         return (0xFF shl 24) or (r.toInt() shl 16) or (g.toInt() shl 8) or b.toInt()
+    }
+
+    /**
+     * 检测背景图是否偏暗，用于自动切换文字颜色
+     * @return true=暗色背景（文字应用白色），false=亮色背景（文字应用黑色）
+     */
+    fun isDarkBackground(context: Context): Boolean {
+        val path = getBackgroundPath(context) ?: return false
+        val bitmap = BitmapFactory.decodeFile(path) ?: return false
+        return try {
+            // 缩放到 8x8 取平均亮度，比 1x1 更稳定
+            val scaled = Bitmap.createScaledBitmap(bitmap, 8, 8, true)
+            var totalLuminance = 0.0
+            var count = 0
+            for (x in 0 until scaled.width) {
+                for (y in 0 until scaled.height) {
+                    val pixel = scaled.getPixel(x, y)
+                    val r = (pixel shr 16) and 0xFF
+                    val g = (pixel shr 8) and 0xFF
+                    val b = pixel and 0xFF
+                    // 人眼感知亮度公式
+                    totalLuminance += 0.299 * r + 0.587 * g + 0.114 * b
+                    count++
+                }
+            }
+            scaled.recycle()
+            val avg = if (count > 0) totalLuminance / count else 255.0
+            avg < 140.0 // 阈值140，偏保守地认为中等亮度以下就用白字
+        } finally {
+            bitmap.recycle()
+        }
     }
 }

@@ -27,6 +27,8 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
 
     private val cardsContainer: LinearLayout
     private val emptyText: TextView
+    private val titleText: TextView
+    private val subtitleText: TextView
     private val contentLayout: LinearLayout
     private var openedRouters: List<RouterStore.Router> = emptyList()
     private var currentRouterId: String? = null
@@ -43,22 +45,22 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             setPadding(dp(20), dp(8), dp(20), 0)
         }
 
-        val title = TextView(context).apply {
+        titleText = TextView(context).apply {
             text = "多任务"
             textSize = 32f
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
             setPadding(0, dp(12), 0, dp(8))
         }
-        contentLayout.addView(title)
+        contentLayout.addView(titleText)
 
-        val subtitle = TextView(context).apply {
+        subtitleText = TextView(context).apply {
             text = "已打开的管理界面，点击切换，✕ 关闭"
             textSize = 13f
             setTextColor(Color.parseColor("#999999"))
             setPadding(0, 0, 0, dp(16))
         }
-        contentLayout.addView(subtitle)
+        contentLayout.addView(subtitleText)
 
         cardsContainer = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -112,11 +114,27 @@ class MultiTaskView(context: Context) : FrameLayout(context) {
             if (bitmap != null) {
                 background = BitmapDrawable(resources, bitmap)
                 contentLayout.setBackgroundColor(Color.TRANSPARENT)
+                applyTextColor()
                 return
             }
         }
         background = null
         setBackgroundColor(Color.parseColor("#F0F2F5"))
+        applyTextColor()
+    }
+
+    /** 根据背景明暗自动切换标题、副标题、空状态文字颜色 */
+    private fun applyTextColor() {
+        val dark = AppSettings.isDarkBackground(context)
+        if (dark) {
+            titleText.setTextColor(Color.WHITE)
+            subtitleText.setTextColor(Color.parseColor("#CCCCCC"))
+            emptyText.setTextColor(Color.parseColor("#AAAAAA"))
+        } else {
+            titleText.setTextColor(Color.parseColor("#1A1A1A"))
+            subtitleText.setTextColor(Color.parseColor("#999999"))
+            emptyText.setTextColor(Color.parseColor("#BBBBBB"))
+        }
     }
 
     private fun createTaskCard(router: RouterStore.Router): View {

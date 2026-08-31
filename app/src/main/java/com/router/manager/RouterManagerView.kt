@@ -99,7 +99,7 @@ class RouterManagerView(context: Context) : FrameLayout(context) {
 
     fun applyTheme() {
         themeColor = AppSettings.getThemeColor(context)
-        settingsBtn.setColorFilter(themeColor, PorterDuff.Mode.SRC_ATOP)
+        applyTextColor()
         // 刷新所有卡片的"进入管理"颜色
         for (i in 0 until cardsContainer.childCount) {
             val card = cardsContainer.getChildAt(i) as? LinearLayout
@@ -112,6 +112,18 @@ class RouterManagerView(context: Context) : FrameLayout(context) {
         }
     }
 
+    /** 根据背景明暗自动切换标题和设置按钮颜色 */
+    private fun applyTextColor() {
+        val dark = AppSettings.isDarkBackground(context)
+        if (dark) {
+            titleText.setTextColor(Color.WHITE)
+            settingsBtn.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+        } else {
+            titleText.setTextColor(Color.parseColor("#1A1A1A"))
+            settingsBtn.setColorFilter(themeColor, PorterDuff.Mode.SRC_ATOP)
+        }
+    }
+
     fun applyBackground() {
         val path = AppSettings.getBackgroundPath(context)
         if (path != null && File(path).exists()) {
@@ -119,11 +131,13 @@ class RouterManagerView(context: Context) : FrameLayout(context) {
             if (bitmap != null) {
                 background = BitmapDrawable(resources, bitmap)
                 contentLayout.setBackgroundColor(Color.TRANSPARENT)
+                applyTextColor()
                 return
             }
         }
         background = null
         setBackgroundColor(Color.parseColor("#F0F2F5"))
+        applyTextColor()
     }
 
     private fun createRouterCard(router: RouterStore.Router): View {
