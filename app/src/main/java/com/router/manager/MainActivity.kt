@@ -140,6 +140,7 @@ class MainActivity : android.app.Activity() {
     private fun loadRouter(router: Router) {
         currentRouter = router
         prefs.edit().putString(KEY_CURRENT_ID, router.id).apply()
+        actionBar?.title = router.name
         webView.loadUrl(router.url)
     }
 
@@ -258,7 +259,7 @@ class MainActivity : android.app.Activity() {
     // ─── 菜单 ────────────────────────────────────────────
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.add(0, 1, 0, "切换路由器")
+        menu?.add(0, 1, 0, "切换")?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         menu?.add(0, 2, 1, "添加路由器")
         menu?.add(0, 3, 2, "删除当前路由器")
         return true
