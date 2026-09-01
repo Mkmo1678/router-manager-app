@@ -302,7 +302,6 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         modeSegment.addView(localBtn)
         modeSegment.addView(remoteBtn)
 
-        nameRow.addView(nameText)
         modeRow.addView(modeSegment)
 
         val urlText = TextView(context).apply {
