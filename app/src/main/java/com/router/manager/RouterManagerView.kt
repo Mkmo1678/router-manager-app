@@ -212,7 +212,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             )
         }
 
-        // 名称行：名称 + 访问模式标签（点击切换）
+        // 名称行：名称独占整行，超长自动换行确保完整显示
         val nameRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -223,19 +223,25 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             textSize = 18f
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
-            maxLines = 1
-            // 名称过长时自动缩小字体，确保完整显示
-            setAutoSizeTextTypeUniformWithConfiguration(
-                11, 18, 1, android.util.TypedValue.COMPLEX_UNIT_SP
-            )
+            maxLines = 2
             layoutParams = LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
 
+        nameRow.addView(nameText)
+
         val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
 
-        // 分段控件：本地 / 远程（与编辑对话框一致的风格）
+        // 分段控件行：本地 / 远程（与编辑对话框一致的风格）
+        val modeRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(4), 0, 0)
+        }
+
+        // 分段控件：本地 / 远程
         val modeSegment = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(dp(2), dp(2), dp(2), dp(2))
@@ -246,9 +252,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             }
             layoutParams = LinearLayout.LayoutParams(
                 dp(112), dp(28)
-            ).apply {
-                marginStart = dp(8)
-            }
+            )
         }
 
         val localBtn = TextView(context).apply {
@@ -299,7 +303,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         modeSegment.addView(remoteBtn)
 
         nameRow.addView(nameText)
-        nameRow.addView(modeSegment)
+        modeRow.addView(modeSegment)
 
         val urlText = TextView(context).apply {
             text = if (show) router.currentUrl else "地址：••••••••••••"
@@ -309,6 +313,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
 
         textLayout.addView(nameRow)
+        textLayout.addView(modeRow)
         textLayout.addView(urlText)
 
         // 账号密码行（如果有保存）
