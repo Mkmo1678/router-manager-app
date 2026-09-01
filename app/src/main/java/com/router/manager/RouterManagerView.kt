@@ -224,7 +224,10 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
             maxLines = 1
-            ellipsize = android.text.TextUtils.TruncateAt.END
+            // 名称过长时自动缩小字体，确保完整显示
+            setAutoSizeTextTypeUniformWithConfiguration(
+                11, 18, 1, android.util.TypedValue.COMPLEX_UNIT_SP
+            )
             layoutParams = LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
             )
