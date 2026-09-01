@@ -180,27 +180,41 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
 
         // 圆形图标
+        val hasCustomIcon = router.customIconPath != null && File(router.customIconPath).exists()
         val iconContainer = FrameLayout(context).apply {
             val size = dp(58)
             layoutParams = LinearLayout.LayoutParams(size, size).apply {
                 marginEnd = dp(14)
             }
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(router.iconColor)
+            if (!hasCustomIcon) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(router.iconColor)
+                }
             }
             elevation = dp(4).toFloat()
         }
 
         val icon = ImageView(context).apply {
-            val size = dp(28)
-            layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
-            setImageResource(R.drawable.ic_launcher_foreground)
-            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
-        }
-        if (router.customIconPath != null && File(router.customIconPath).exists()) {
-            icon.setImageBitmap(BitmapFactory.decodeFile(router.customIconPath))
-            icon.colorFilter = null
+            if (hasCustomIcon) {
+                // 自定义图标：填满整个圆形区域，无颜色背景
+                val size = dp(58)
+                layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                setImageBitmap(BitmapFactory.decodeFile(router.customIconPath))
+                clipToOutline = true
+                outlineProvider = object : android.view.ViewOutlineProvider() {
+                    override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                        outline.setOval(0, 0, view.width, view.height)
+                    }
+                }
+            } else {
+                // 默认图标：颜色背景 + 白色路由器图标
+                val size = dp(28)
+                layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
+                setImageResource(R.drawable.ic_launcher_foreground)
+                setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            }
         }
         iconContainer.addView(icon)
 
