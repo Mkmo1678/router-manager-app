@@ -309,13 +309,15 @@ class MainActivity : android.app.Activity() {
         val progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(3),
+                dp(4),
                 Gravity.BOTTOM
             )
             max = 100
             progress = 0
             visibility = View.GONE
-            progressDrawable?.setColorFilter(AppSettings.getThemeColor(this@MainActivity), PorterDuff.Mode.SRC_IN)
+            val themeColor = AppSettings.getThemeColor(this@MainActivity)
+            progressTintList = android.content.res.ColorStateList.valueOf(themeColor)
+            progressBackgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#33FFFFFF"))
         }
         webProgressBar = progressBar
 

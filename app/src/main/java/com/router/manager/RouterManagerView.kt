@@ -226,30 +226,72 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
 
         val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
-        val modeTag = TextView(context).apply {
-            text = if (isRemote) "远程" else "本地"
-            textSize = 10f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.BOLD)
-            setPadding(dp(6), dp(2), dp(6), dp(2))
+
+        // 分段控件：本地 / 远程（与编辑对话框一致的风格）
+        val modeSegment = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(2), dp(2), dp(2), dp(2))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(8).toFloat()
-                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+                setColor(Color.parseColor("#E0E0E0"))
             }
             layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                dp(100), dp(26)
             ).apply {
                 marginStart = dp(8)
             }
+        }
+
+        val localBtn = TextView(context).apply {
+            text = "本地"
+            textSize = 11f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                marginEnd = dp(2)
+            }
+            if (router.accessMode == RouterStore.ACCESS_LOCAL) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(6).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(themeColor)
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
             setOnClickListener {
-                toggleAccessMode(router)
+                toggleAccessMode(router, RouterStore.ACCESS_LOCAL)
             }
         }
 
+        val remoteBtn = TextView(context).apply {
+            text = "远程"
+            textSize = 11f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+            if (isRemote) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(6).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(0xFFE65100.toInt())
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
+            setOnClickListener {
+                toggleAccessMode(router, RouterStore.ACCESS_REMOTE)
+            }
+        }
+
+        modeSegment.addView(localBtn)
+        modeSegment.addView(remoteBtn)
+
         nameRow.addView(nameText)
-        nameRow.addView(modeTag)
+        nameRow.addView(modeSegment)
 
         val urlText = TextView(context).apply {
             text = if (show) router.currentUrl else "地址：••••••••••••"
@@ -352,25 +394,20 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
     }
 
     /** 切换单个路由器的访问模式（本地/远程）并保存 */
-    private fun toggleAccessMode(router: RouterStore.Router) {
+    private fun toggleAccessMode(router: RouterStore.Router, targetMode: Int) {
         val index = routers.indexOfFirst { it.id == router.id }
         if (index >= 0) {
-            val newMode = if (router.accessMode == RouterStore.ACCESS_LOCAL) {
-                if (router.remoteUrl.isEmpty()) {
-                    android.widget.Toast.makeText(context, "请先在编辑中填写远程地址", android.widget.Toast.LENGTH_SHORT).show()
-                    return
-                }
-                RouterStore.ACCESS_REMOTE
-            } else {
-                RouterStore.ACCESS_LOCAL
+            if (targetMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isEmpty()) {
+                android.widget.Toast.makeText(context, "请先在编辑中填写远程地址", android.widget.Toast.LENGTH_SHORT).show()
+                return
             }
-            val updated = router.copy(accessMode = newMode)
+            val updated = router.copy(accessMode = targetMode)
             routers[index] = updated
             RouterStore.saveRouters(context, routers)
             refresh()
             android.widget.Toast.makeText(
                 context,
-                "已切换为${if (newMode == RouterStore.ACCESS_REMOTE) "远程" else "本地"}访问",
+                "已切换为${if (targetMode == RouterStore.ACCESS_REMOTE) "远程" else "本地"}访问",
                 android.widget.Toast.LENGTH_SHORT
             ).show()
         }
