@@ -4,38 +4,77 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 路由器机身 -->
+    <!-- 信号波纹 - 最外层 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,64 L78,64 L78,80 L30,80 Z" />
+        android:fillAlpha="0.35"
+        android:pathData="M34,36 A20,20 0 0,1 74,36 L70,36 A16,16 0 0,0 38,36 Z" />
+
+    <!-- 信号波纹 - 中层 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.6"
+        android:pathData="M40,36 A14,14 0 0,1 68,36 L65,36 A11,11 0 0,0 43,36 Z" />
+
+    <!-- 信号波纹 - 内层 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,36 A8,8 0 0,1 62,36 L59,36 A5,5 0 0,0 49,36 Z" />
 
     <!-- 左侧天线 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M40,64 L40,38 L46,38 L46,64 Z" />
+        android:pathData="M35.5,60 L32.5,31 Q32.5,27 36.5,27 L40.5,27 Q44.5,27 44.5,31 L41.5,60 Z" />
 
     <!-- 右侧天线 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M62,64 L62,38 L68,38 L68,64 Z" />
+        android:pathData="M66.5,60 L69.5,31 Q69.5,27 73.5,27 L77.5,27 Q81.5,27 81.5,31 L78.5,60 Z" />
 
-    <!-- 顶部信号弧 -->
+    <!-- 路由器机身主体 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M44,34 A12,12 0 0,1 64,34 L62,34 A10,10 0 0,0 46,34 Z" />
+        android:pathData="M34,60 L74,60 Q82,60 82,68 L82,82 Q82,90 74,90 L34,90 Q26,90 26,82 L26,68 Q26,60 34,60 Z" />
+
+    <!-- 机身顶部高光条 -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M34,60 L74,60 Q82,60 82,66 L26,66 L26,68 Q26,60 34,60 Z" />
+
+    <!-- 机身显示屏（深色） -->
+    <path
+        android:fillColor="#0D47A1"
+        android:pathData="M40,68 L68,68 L68,76 L40,76 Z" />
+
+    <!-- 显示屏信号格 -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M44,73 L44,71 L46,71 L46,73 Z" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M48,74 L48,70 L50,70 L50,74 Z" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M52,75 L52,69 L54,69 L54,75 Z" />
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M56,76 L56,68 L58,68 L58,76 Z" />
 
     <!-- 指示灯 -->
     <path
         android:fillColor="#4CAF50"
-        android:pathData="M38,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+        android:pathData="M36,81 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
     <path
         android:fillColor="#4CAF50"
-        android:pathData="M48,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+        android:pathData="M44,81 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
     <path
         android:fillColor="#4CAF50"
-        android:pathData="M58,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+        android:pathData="M52,81 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
     <path
         android:fillColor="#FFC107"
-        android:pathData="M68,72 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+        android:pathData="M60,81 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M68,81 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
 
 </vector>

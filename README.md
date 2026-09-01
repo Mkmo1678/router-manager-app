@@ -1,14 +1,34 @@
 # 路由器管理 Android APP
 
-一个极简的 Android WebView 壳应用，把你的路由器管理平台（React + NestJS 全栈项目）包装成可安装的 APK。
+一个功能完善的 Android 多路由器后台管理工具，基于 WebView 实现，支持多路由器同时在线、后台多任务切换、密码自动填充、文件上传下载等。
 
-## 原理
+## 功能特性
 
-- APP 内嵌入一个全屏 WebView，打开你输入的服务器地址
-- 前端页面和 API 都由你的后端（NestJS）提供，APP 不做任何业务逻辑
-- 支持**多路由器管理**：可保存多个路由器（名称+地址），一键切换
-- 自动记住上次使用的路由器，下次打开直接进入
-- 支持返回键回退、页面缩放、HTTP 明文访问
+### 核心功能
+- **多路由器管理**：保存无限个路由器（名称 + 管理地址 + 用户名 + 密码）
+- **后台多任务**：同时打开多个路由器后台，登录状态保持，一键切换
+- **密码自动填充**：保存用户名密码后，打开登录页自动填入，无需手动输入
+- **文件上传/下载**：支持路由器固件升级、配置备份/恢复等需要文件操作的功能
+- **UA 模式切换**：手机/电脑 UA 一键切换，默认电脑模式，适配需要 UAC/电脑网页的登录页
+
+### 界面与个性化
+- **玻璃拟态卡片 UI**：毛玻璃效果 + 大圆角 + 柔和阴影，精致高大上
+- **自定义主题色**：7 种主题色可选（蓝/绿/橙/紫/红/青/灰蓝）
+- **自定义背景壁纸**：相册选图，壁纸延伸到状态栏和导航栏
+- **自定义首页标题**：首页名称可改
+- **状态栏自动适配**：状态栏图标颜色随背景明暗自动切换（白字/黑字）
+- **底部导航栏**：透明带阴影，选中按钮主题色高亮，自动隐藏/弹出
+
+### 安全与隐私
+- **每卡片独立 IP/密码隐藏**：眼睛按钮单独控制每个路由器的地址和密码显示/隐藏
+- **登录状态保持**：WebView 池复用，切换不销毁，Cookie/Session 不丢失
+- **本地存储**：所有数据保存在手机本地，不上传任何服务器
+
+### 其他
+- **版本号自动迭代**：每次编译版本号自动递增
+- **关于页面更新日志**：App 内可查看完整版本更新记录
+- **HTTP 明文支持**：支持 `http://` 内网地址访问
+- **页面缩放**：支持双指缩放，适配不同路由器后台页面
 
 ## 一键编译（GitHub Actions，推荐）
 
@@ -28,7 +48,7 @@ git push -u origin main
 
 ### 第二步：触发编译
 
-推送后 GitHub 会自动运行 Actions（`.github/workflows/build.yml`），约 3-5 分钟完成。
+推送后 GitHub 会自动运行 Actions（`.github/workflows/build.yml`），约 1 分钟完成。
 
 也可以手动触发：仓库页面 → Actions → Build Debug APK → Run workflow。
 
@@ -40,39 +60,44 @@ git push -u origin main
 
 把 APK 传到手机，点击安装（需要开启"允许安装未知来源应用"）。
 
-## 本地编译（可选）
-
-如果你装了 Android Studio：
-
-1. 用 Android Studio 打开本项目目录
-2. 等待 Gradle 同步完成
-3. 菜单 Build → Build Bundle(s) / APK(s) → Build APK(s)
-4. 生成路径：`app/build/outputs/apk/debug/app-debug.apk`
-
 ## 使用方法
 
-1. 确保你的路由器管理平台后端已启动，且手机能访问（同一 WiFi 下用 `http://路由器IP:端口`）
-2. 首次打开 APP 会弹出"添加路由器"对话框，输入名称（如"家里"）和地址（如 `http://192.168.1.1:3000`），点保存
-3. 点右上角菜单（三个点）可进行以下操作：
-   - **切换路由器**：从已保存的列表中选择，当前使用的前面有 ✓ 标记
-   - **添加路由器**：新增一个路由器地址
-   - **删除当前路由器**：移除当前正在使用的路由器
-4. 下次打开 APP 自动加载上次使用的路由器
+1. 打开 APP，底部点「+」添加路由器
+2. 填写名称（如"家里"）、管理地址（如 `http://192.168.1.1`），可选填用户名和密码
+3. 点击路由器卡片进入管理界面，登录页会自动填充已保存的账号密码
+4. 按返回键直接回到多任务页，登录状态保持
+5. 底部「多任务」查看所有已打开的后台，点击切换或关闭
+6. 卡片右侧眼睛按钮可隐藏/显示该路由器的地址和密码
+7. 首页右上角齿轮可设置主题色、背景壁纸、UA 模式、首页标题
 
-## 自定义
+## 自定义配置
 
 | 项目 | 文件 | 说明 |
 |------|------|------|
 | APP 名称 | `app/src/main/res/values/strings.xml` | 修改 `app_name` |
 | 包名 | `app/build.gradle.kts` + `AndroidManifest.xml` | 修改 `applicationId` 和 `namespace` |
-| 图标颜色 | `app/src/main/res/values/colors.xml` | 修改 `ic_launcher_background` |
+| 图标背景 | `app/src/main/res/drawable/ic_launcher_bg.xml` | 修改渐变色 |
 | 图标图案 | `app/src/main/res/drawable/ic_launcher_foreground.xml` | 修改矢量路径 |
-| 版本号 | `app/build.gradle.kts` | 修改 `versionCode` / `versionName` |
+| 版本号 | `app/build.gradle.kts` | 自动基于 git commit 数递增 |
 | 最低安卓版本 | `app/build.gradle.kts` | 修改 `minSdk`（当前 26 = Android 8.0） |
+
+## 技术栈
+
+- **语言**：Kotlin
+- **最低 SDK**：Android 8.0 (API 26)
+- **编译 SDK**：Android 14 (API 34)
+- **构建工具**：Gradle 8.7
+- **CI/CD**：GitHub Actions 自动编译
+- **核心实现**：WebView + WebViewClient + WebChromeClient + DownloadManager
 
 ## 注意事项
 
 - Debug APK 未签名，只能自己安装测试，不能上架应用商店
 - 如需正式签名 Release 版，需要生成 keystore 并配置签名
-- 如果后端是 HTTPS 自签名证书，APP 会提示证书错误，需在 WebView 中额外处理
-- 后端必须允许跨域或与前端同源（本项目原本就是同源部署，直接访问后端地址即可）
+- 路由器后台需手机能访问（同一 WiFi 或 VPN 下用 `http://路由器IP:端口`）
+- 密码自动填充通过 JS 注入实现，兼容大多数标准登录表单
+- 所有数据仅存储在本地，卸载 APP 会清除所有已保存的路由器信息
+
+## 作者
+
+burry默默
