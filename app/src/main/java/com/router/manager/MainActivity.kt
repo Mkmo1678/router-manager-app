@@ -526,9 +526,9 @@ class MainActivity : android.app.Activity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (currentTab == TAB_WEB && currentRouterId != null) {
-            val webView = webViewPool[currentRouterId]
-            if (webView?.canGoBack() == true) {
-                webView.goBack()
+            // 按返回键直接回到多任务页面，不逐步退网页历史，WebView保持后台登录状态
+            if (openedRouters.isNotEmpty()) {
+                switchTab(TAB_MULTI)
             } else {
                 switchTab(TAB_HOME)
             }
