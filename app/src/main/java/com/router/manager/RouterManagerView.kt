@@ -223,6 +223,11 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             textSize = 18f
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+            )
         }
 
         val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
@@ -237,7 +242,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 setColor(Color.parseColor("#E0E0E0"))
             }
             layoutParams = LinearLayout.LayoutParams(
-                dp(100), dp(26)
+                dp(112), dp(28)
             ).apply {
                 marginStart = dp(8)
             }
