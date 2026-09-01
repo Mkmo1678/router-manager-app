@@ -44,12 +44,14 @@ object SettingsDialog {
     private var tempBackgroundPath: String? = null
     private var tempUaMode: Int = AppSettings.UA_MODE_DESKTOP
     private var tempShowIp: Boolean = true
+    private var tempLayout: Int = AppSettings.LAYOUT_LIST
     private var bgPreview: ImageView? = null
     private var colorContainer: LinearLayout? = null
     private var uaMobileBtn: Button? = null
     private var uaDesktopBtn: Button? = null
     private var ipShowBtn: Button? = null
     private var ipHideBtn: Button? = null
+    private var layoutBtns: Array<Button?> = arrayOfNulls(4)
     private var density: Float = 2f
     private var onChangedCallback: (() -> Unit)? = null
 
@@ -59,6 +61,7 @@ object SettingsDialog {
         tempBackgroundPath = AppSettings.getBackgroundPath(activity)
         tempUaMode = AppSettings.getUaMode(activity)
         tempShowIp = AppSettings.getShowIp(activity)
+        tempLayout = AppSettings.getHomeLayout(activity)
         density = activity.resources.displayMetrics.density
         onChangedCallback = onChanged
 
@@ -232,6 +235,56 @@ object SettingsDialog {
         }
         updateIpButtons(activity)
 
+        // 首页布局选择
+        val layoutLabel = TextView(activity).apply {
+            text = "首页布局"
+            textSize = 14f
+            setTextColor(Color.parseColor("#666666"))
+            setPadding(dp(activity, 4), dp(activity, 12), 0, dp(activity, 4))
+        }
+
+        val layoutNames = arrayOf("列表布局", "紧凑列表", "网格布局", "大图标")
+        val layoutValues = intArrayOf(
+            AppSettings.LAYOUT_LIST,
+            AppSettings.LAYOUT_COMPACT,
+            AppSettings.LAYOUT_GRID,
+            AppSettings.LAYOUT_ICON
+        )
+        val layoutGrid = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        for (row in 0 until 2) {
+            val rowLayout = LinearLayout(activity).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+            for (col in 0 until 2) {
+                val idx = row * 2 + col
+                val btn = Button(activity).apply {
+                    text = layoutNames[idx]
+                    textSize = 12f
+                    setOnClickListener {
+                        tempLayout = layoutValues[idx]
+                        updateLayoutButtons(activity)
+                    }
+                }
+                layoutBtns[idx] = btn
+                rowLayout.addView(btn, LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+                ).apply {
+                    if (col == 0) marginEnd = dp(activity, 6)
+                })
+            }
+            layoutGrid.addView(rowLayout)
+            if (row == 0) {
+                layoutGrid.addView(View(activity).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 6)
+                    )
+                })
+            }
+        }
+        updateLayoutButtons(activity)
+
         // 数据备份与恢复
         val backupLabel = TextView(activity).apply {
             text = "数据备份与恢复"
@@ -285,6 +338,8 @@ object SettingsDialog {
             addView(uaBtnRow)
             addView(ipLabel)
             addView(ipBtnRow)
+            addView(layoutLabel)
+            addView(layoutGrid)
             addView(backupLabel)
             addView(backupBtnRow)
         }
@@ -301,6 +356,7 @@ object SettingsDialog {
                 AppSettings.setBackgroundPath(activity, tempBackgroundPath)
                 AppSettings.setUaMode(activity, tempUaMode)
                 AppSettings.setShowIp(activity, tempShowIp)
+                AppSettings.setHomeLayout(activity, tempLayout)
                 onChangedCallback?.invoke()
                 cleanup()
                 Toast.makeText(activity, "设置已保存", Toast.LENGTH_SHORT).show()
@@ -490,6 +546,21 @@ object SettingsDialog {
         )
     }
 
+    private fun updateLayoutButtons(activity: Activity) {
+        val selected = AppSettings.lighten(AppSettings.getThemeColor(activity), 0.85f)
+        val layoutValues = intArrayOf(
+            AppSettings.LAYOUT_LIST,
+            AppSettings.LAYOUT_COMPACT,
+            AppSettings.LAYOUT_GRID,
+            AppSettings.LAYOUT_ICON
+        )
+        for (i in layoutBtns.indices) {
+            layoutBtns[i]?.setBackgroundColor(
+                if (tempLayout == layoutValues[i]) selected else Color.parseColor("#EEEEEE")
+            )
+        }
+    }
+
     private fun cleanup() {
         bgPreview = null
         colorContainer = null
@@ -497,6 +568,7 @@ object SettingsDialog {
         uaDesktopBtn = null
         ipShowBtn = null
         ipHideBtn = null
+        layoutBtns = arrayOfNulls(4)
         onChangedCallback = null
     }
 

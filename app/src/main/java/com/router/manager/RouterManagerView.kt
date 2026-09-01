@@ -10,6 +10,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -27,7 +28,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
     var onRouterDelete: ((RouterStore.Router) -> Unit)? = null
     var onSettingsClick: (() -> Unit)? = null
 
-    private val cardsContainer: LinearLayout
+    private val cardsContainer: FrameLayout
     private val titleText: TextView
     private val settingsBtn: ImageView
     private val contentLayout: LinearLayout
@@ -85,9 +86,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         titleBar.addView(settingsBtn)
         contentLayout.addView(titleBar)
 
-        cardsContainer = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-        }
+        cardsContainer = FrameLayout(context)
         contentLayout.addView(cardsContainer)
 
         scrollView.addView(contentLayout)
@@ -100,9 +99,40 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
     fun refresh() {
         routers = RouterStore.loadRouters(context)
         titleText.text = AppSettings.getTitle(context)
+        themeColor = AppSettings.getThemeColor(context)
         cardsContainer.removeAllViews()
-        for (router in routers) {
-            cardsContainer.addView(createRouterCard(router))
+        val layout = AppSettings.getHomeLayout(context)
+        when (layout) {
+            AppSettings.LAYOUT_COMPACT -> {
+                val list = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+                for (router in routers) list.addView(createCompactCard(router))
+                cardsContainer.addView(list)
+            }
+            AppSettings.LAYOUT_GRID -> {
+                val grid = createGridLayout(2)
+                for (router in routers) grid.addView(createGridCard(router))
+                cardsContainer.addView(grid)
+            }
+            AppSettings.LAYOUT_ICON -> {
+                val grid = createGridLayout(3)
+                for (router in routers) grid.addView(createIconCard(router))
+                cardsContainer.addView(grid)
+            }
+            else -> { // LAYOUT_LIST
+                val list = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+                for (router in routers) list.addView(createRouterCard(router))
+                cardsContainer.addView(list)
+            }
+        }
+    }
+
+    private fun createGridLayout(spanCount: Int): GridLayout {
+        return GridLayout(context).apply {
+            columnCount = spanCount
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
     }
 
@@ -417,6 +447,284 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             RouterStore.saveRouters(context, routers)
             refresh()
         }
+    }
+
+    // ─── 紧凑列表卡片 ────────────────────────────────────────
+    private fun createCompactCard(router: RouterStore.Router): View {
+        val card = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(10) }
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(18).toFloat()
+                setColor(Color.parseColor("#D8FFFFFF"))
+                setStroke(dp(1), Color.parseColor("#22FFFFFF"))
+            }
+            elevation = dp(3).toFloat()
+            setOnClickListener { onRouterClick?.invoke(router) }
+        }
+
+        // 图标
+        val hasCustomIcon = router.customIconPath != null && File(router.customIconPath).exists()
+        val icon = ImageView(context).apply {
+            val size = dp(42)
+            layoutParams = LinearLayout.LayoutParams(size, size).apply { marginEnd = dp(12) }
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            if (hasCustomIcon) {
+                setImageBitmap(BitmapFactory.decodeFile(router.customIconPath))
+                clipToOutline = true
+                outlineProvider = object : android.view.ViewOutlineProvider() {
+                    override fun getOutline(v: android.view.View, o: android.graphics.Outline) {
+                        o.setOval(0, 0, v.width, v.height)
+                    }
+                }
+            } else {
+                setImageResource(R.drawable.ic_launcher_foreground)
+                setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(router.iconColor)
+                }
+                setPadding(dp(8), dp(8), dp(8), dp(8))
+            }
+        }
+
+        // 文字区
+        val textLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val nameText = TextView(context).apply {
+            text = router.name
+            textSize = 16f
+            setTextColor(Color.parseColor("#1A1A1A"))
+            setTypeface(null, Typeface.BOLD)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+        val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
+        val urlText = TextView(context).apply {
+            text = if (router.showIp) router.currentUrl else "••••••••••••"
+            textSize = 12f
+            setTextColor(Color.parseColor("#777777"))
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(0, dp(2), 0, 0)
+        }
+        textLayout.addView(nameText)
+        textLayout.addView(urlText)
+
+        // 模式标签 + 编辑
+        val rightLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+        }
+        val modeTag = TextView(context).apply {
+            text = if (isRemote) "远程" else "本地"
+            textSize = 9f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            setPadding(dp(6), dp(2), dp(6), dp(2))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(6).toFloat()
+                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+            }
+        }
+        val editBtn = ImageView(context).apply {
+            val size = dp(28)
+            layoutParams = LinearLayout.LayoutParams(size, size).apply { topMargin = dp(4) }
+            setImageResource(android.R.drawable.ic_menu_edit)
+            setColorFilter(Color.parseColor("#888888"), PorterDuff.Mode.SRC_ATOP)
+            setOnClickListener { onRouterEdit?.invoke(router) }
+        }
+        rightLayout.addView(modeTag)
+        rightLayout.addView(editBtn)
+
+        card.addView(icon)
+        card.addView(textLayout)
+        card.addView(rightLayout)
+        return card
+    }
+
+    // ─── 网格卡片（2列） ────────────────────────────────────────
+    private fun createGridCard(router: RouterStore.Router): View {
+        val card = FrameLayout(context).apply {
+            layoutParams = GridLayout.LayoutParams().apply {
+                width = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(dp(5), dp(5), dp(5), dp(5))
+            }
+            setOnClickListener { onRouterClick?.invoke(router) }
+        }
+
+        val content = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(12), dp(16), dp(12), dp(14))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(20).toFloat()
+                setColor(Color.parseColor("#D8FFFFFF"))
+                setStroke(dp(1), Color.parseColor("#22FFFFFF"))
+            }
+            elevation = dp(3).toFloat()
+        }
+
+        // 图标
+        val hasCustomIcon = router.customIconPath != null && File(router.customIconPath).exists()
+        val icon = ImageView(context).apply {
+            val size = dp(56)
+            layoutParams = LinearLayout.LayoutParams(size, size)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            if (hasCustomIcon) {
+                setImageBitmap(BitmapFactory.decodeFile(router.customIconPath))
+                clipToOutline = true
+                outlineProvider = object : android.view.ViewOutlineProvider() {
+                    override fun getOutline(v: android.view.View, o: android.graphics.Outline) {
+                        o.setOval(0, 0, v.width, v.height)
+                    }
+                }
+            } else {
+                setImageResource(R.drawable.ic_launcher_foreground)
+                setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(router.iconColor)
+                }
+                setPadding(dp(12), dp(12), dp(12), dp(12))
+            }
+        }
+
+        val nameText = TextView(context).apply {
+            text = router.name
+            textSize = 14f
+            setTextColor(Color.parseColor("#1A1A1A"))
+            setTypeface(null, Typeface.BOLD)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(0, dp(10), 0, 0)
+        }
+
+        val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
+        val modeTag = TextView(context).apply {
+            text = if (isRemote) "远程" else "本地"
+            textSize = 10f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            setPadding(dp(8), dp(3), dp(8), dp(3))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(8).toFloat()
+                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+            }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(6) }
+        }
+
+        content.addView(icon)
+        content.addView(nameText)
+        content.addView(modeTag)
+
+        // 编辑按钮（右上角）
+        val editBtn = ImageView(context).apply {
+            val size = dp(26)
+            layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
+                setMargins(0, dp(6), dp(6), 0)
+            }
+            setImageResource(android.R.drawable.ic_menu_edit)
+            setColorFilter(Color.parseColor("#999999"), PorterDuff.Mode.SRC_ATOP)
+            setOnClickListener { onRouterEdit?.invoke(router) }
+        }
+
+        card.addView(content)
+        card.addView(editBtn)
+        return card
+    }
+
+    // ─── 大图标卡片（3列） ────────────────────────────────────────
+    private fun createIconCard(router: RouterStore.Router): View {
+        val card = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(4), dp(8), dp(4), dp(8))
+            layoutParams = GridLayout.LayoutParams().apply {
+                width = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(dp(4), dp(4), dp(4), dp(4))
+            }
+            setOnClickListener { onRouterClick?.invoke(router) }
+            setOnLongClickListener {
+                onRouterEdit?.invoke(router)
+                true
+            }
+        }
+
+        val hasCustomIcon = router.customIconPath != null && File(router.customIconPath).exists()
+        val icon = ImageView(context).apply {
+            val size = dp(62)
+            layoutParams = LinearLayout.LayoutParams(size, size)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            if (hasCustomIcon) {
+                setImageBitmap(BitmapFactory.decodeFile(router.customIconPath))
+                clipToOutline = true
+                outlineProvider = object : android.view.ViewOutlineProvider() {
+                    override fun getOutline(v: android.view.View, o: android.graphics.Outline) {
+                        o.setOval(0, 0, v.width, v.height)
+                    }
+                }
+            } else {
+                setImageResource(R.drawable.ic_launcher_foreground)
+                setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(router.iconColor)
+                }
+                setPadding(dp(14), dp(14), dp(14), dp(14))
+            }
+            elevation = dp(4).toFloat()
+        }
+
+        val nameText = TextView(context).apply {
+            text = router.name
+            textSize = 12f
+            setTextColor(Color.parseColor("#1A1A1A"))
+            setTypeface(null, Typeface.BOLD)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(0, dp(6), 0, 0)
+        }
+
+        val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
+        val modeTag = TextView(context).apply {
+            text = if (isRemote) "远程" else "本地"
+            textSize = 8f
+            setTextColor(Color.WHITE)
+            setPadding(dp(5), dp(1), dp(5), dp(1))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(5).toFloat()
+                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+            }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(3) }
+        }
+
+        card.addView(icon)
+        card.addView(nameText)
+        card.addView(modeTag)
+        return card
     }
 
     /** 切换单个路由器的访问模式（本地/远程）并保存 */

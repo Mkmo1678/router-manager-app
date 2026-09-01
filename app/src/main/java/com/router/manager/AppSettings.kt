@@ -16,9 +16,16 @@ object AppSettings {
     private const val KEY_BACKGROUND_PATH = "background_path"
     private const val KEY_UA_MODE = "ua_mode"
     private const val KEY_SHOW_IP = "show_ip"
+    private const val KEY_HOME_LAYOUT = "home_layout"
 
     const val UA_MODE_MOBILE = 0
     const val UA_MODE_DESKTOP = 1
+
+    /** 首页布局模式 */
+    const val LAYOUT_LIST = 0      // 列表布局（大卡片）
+    const val LAYOUT_COMPACT = 1   // 紧凑列表
+    const val LAYOUT_GRID = 2      // 网格布局（2列）
+    const val LAYOUT_ICON = 3      // 大图标布局（3列）
 
     /** 电脑端 Chrome User-Agent */
     const val DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -90,6 +97,16 @@ object AppSettings {
     fun setShowIp(context: Context, show: Boolean) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().putBoolean(KEY_SHOW_IP, show).apply()
+    }
+
+    fun getHomeLayout(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getInt(KEY_HOME_LAYOUT, LAYOUT_LIST) // 默认列表布局
+    }
+
+    fun setHomeLayout(context: Context, layout: Int) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putInt(KEY_HOME_LAYOUT, layout).apply()
     }
 
     /** 颜色加深（用于状态栏） */
