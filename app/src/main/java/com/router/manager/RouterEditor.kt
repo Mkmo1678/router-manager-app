@@ -3,6 +3,7 @@ package com.router.manager
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.BitmapFactory
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
@@ -99,10 +100,17 @@ object RouterEditor {
                 updateModeButtons(activity)
             }
         }
+        // 分段控件容器：灰色背景 + 圆角，选中项白色高亮
         val modeBtnRow = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(activity, 3), dp(activity, 3), dp(activity, 3), dp(activity, 3))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(activity, 10).toFloat()
+                setColor(0xFFE0E0E0.toInt())
+            }
             addView(localModeBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                marginEnd = dp(activity, 8)
+                marginEnd = dp(activity, 3)
             })
             addView(remoteModeBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         }
@@ -344,13 +352,34 @@ object RouterEditor {
     }
 
     private fun updateModeButtons(activity: Activity) {
-        val selected = AppSettings.lighten(AppSettings.getThemeColor(activity), 0.85f)
-        localModeBtn?.setBackgroundColor(
-            if (editingAccessMode == RouterStore.ACCESS_LOCAL) selected else 0xFFEEEEEE.toInt()
-        )
-        remoteModeBtn?.setBackgroundColor(
-            if (editingAccessMode == RouterStore.ACCESS_REMOTE) selected else 0xFFEEEEEE.toInt()
-        )
+        val themeColor = AppSettings.getThemeColor(activity)
+        // 选中：白色背景 + 主题色文字 + 圆角阴影；未选中：透明背景 + 灰色文字
+        localModeBtn?.apply {
+            background = if (editingAccessMode == RouterStore.ACCESS_LOCAL) {
+                GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(activity, 8).toFloat()
+                    setColor(Color.WHITE)
+                }
+            } else null
+            setTextColor(
+                if (editingAccessMode == RouterStore.ACCESS_LOCAL) themeColor
+                else 0xFF888888.toInt()
+            )
+        }
+        remoteModeBtn?.apply {
+            background = if (editingAccessMode == RouterStore.ACCESS_REMOTE) {
+                GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(activity, 8).toFloat()
+                    setColor(Color.WHITE)
+                }
+            } else null
+            setTextColor(
+                if (editingAccessMode == RouterStore.ACCESS_REMOTE) 0xFFE65100.toInt()
+                else 0xFF888888.toInt()
+            )
+        }
     }
 
     private fun dp(activity: Activity, value: Int): Int {

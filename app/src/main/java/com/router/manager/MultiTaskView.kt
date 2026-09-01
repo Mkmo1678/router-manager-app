@@ -220,6 +220,12 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             )
         }
 
+        // 名称行：名称 + 访问模式标签
+        val nameRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
         val nameText = TextView(context).apply {
             text = if (isCurrent) "✓ ${router.name}" else router.name
             textSize = 16f
@@ -228,6 +234,29 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             )
             setTypeface(null, Typeface.BOLD)
         }
+
+        val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
+        val modeTag = TextView(context).apply {
+            text = if (isRemote) "远程" else "本地"
+            textSize = 9f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            setPadding(dp(5), dp(1), dp(5), dp(1))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(6).toFloat()
+                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+            }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginStart = dp(6)
+            }
+        }
+
+        nameRow.addView(nameText)
+        nameRow.addView(modeTag)
 
         val urlText = TextView(context).apply {
             text = if (show) router.currentUrl else "地址：••••••••••••"
@@ -246,7 +275,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
             setPadding(0, dp(5), 0, 0)
         }
 
-        textLayout.addView(nameText)
+        textLayout.addView(nameRow)
         textLayout.addView(urlText)
         textLayout.addView(statusText)
 

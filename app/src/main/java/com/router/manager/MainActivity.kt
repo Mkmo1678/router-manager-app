@@ -25,6 +25,7 @@ import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import java.io.File
@@ -49,6 +50,9 @@ class MainActivity : android.app.Activity() {
 
     /** 跟踪每个 WebView 加载时的 URL，用于检测访问模式切换 */
     private val webViewUrls = mutableMapOf<String, String>()
+
+    /** 当前管理界面的加载进度条 */
+    private var webProgressBar: ProgressBar? = null
 
     /** 已打开的路由器（多任务列表） */
     private val openedRouters = mutableListOf<RouterStore.Router>()
@@ -204,6 +208,7 @@ class MainActivity : android.app.Activity() {
     private fun switchTab(tab: Int) {
         currentTab = tab
         currentRouterId = null
+        webProgressBar = null
         contentContainer.removeAllViews()
         // 首页/多任务页显示底部导航
         bottomNav.visibility = View.VISIBLE
@@ -258,10 +263,70 @@ class MainActivity : android.app.Activity() {
             setBackgroundColor(Color.parseColor("#99000000"))
         }
 
+        // 顶部工具栏：刷新按钮 + 路由器名称 + 加载进度条
+        val toolBar = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(44)
+            )
+            setBackgroundColor(Color.parseColor("#99000000"))
+        }
+
+        // 刷新按钮
+        val refreshBtn = ImageView(this).apply {
+            val size = dp(36)
+            layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER_VERTICAL).apply {
+                marginStart = dp(8)
+            }
+            setImageResource(R.drawable.ic_refresh)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#33FFFFFF"))
+            }
+            setOnClickListener {
+                webView.reload()
+                Toast.makeText(this@MainActivity, "正在刷新...", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // 路由器名称
+        val titleText = TextView(this).apply {
+            text = router.name
+            textSize = 15f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+            )
+        }
+
+        // 加载进度条
+        val progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(3),
+                Gravity.BOTTOM
+            )
+            max = 100
+            progress = 0
+            visibility = View.GONE
+            progressDrawable?.setColorFilter(AppSettings.getThemeColor(this@MainActivity), PorterDuff.Mode.SRC_IN)
+        }
+        webProgressBar = progressBar
+
+        toolBar.addView(refreshBtn)
+        toolBar.addView(titleText)
+        toolBar.addView(progressBar)
+
         // 复用 WebView 前先从旧父容器移除
         (webView.parent as? ViewGroup)?.removeView(webView)
 
         webContainer.addView(statusBarBg)
+        webContainer.addView(toolBar)
         webContainer.addView(webView, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             0,
@@ -370,6 +435,13 @@ class MainActivity : android.app.Activity() {
                 }
             }
             webChromeClient = object : WebChromeClient() {
+                // 加载进度更新
+                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                    super.onProgressChanged(view, newProgress)
+                    webProgressBar?.progress = newProgress
+                    webProgressBar?.visibility = if (newProgress in 1..99) View.VISIBLE else View.GONE
+                }
+
                 // 文件上传支持
                 override fun onShowFileChooser(
                     webView: WebView?,
