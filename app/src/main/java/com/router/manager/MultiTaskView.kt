@@ -230,7 +230,7 @@ class MultiTaskView(context: Context, private val statusBarHeight: Int) : FrameL
         }
 
         val urlText = TextView(context).apply {
-            text = if (show) router.url else "地址：••••••••••••"
+            text = if (show) router.currentUrl else "地址：••••••••••••"
             textSize = 12f
             setTextColor(Color.parseColor("#666666"))
             setPadding(0, dp(3), 0, 0)

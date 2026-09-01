@@ -39,16 +39,29 @@ object RouterStore {
         0xFF455A64.toInt(), // 灰蓝
     )
 
+    const val ACCESS_LOCAL = 0
+    const val ACCESS_REMOTE = 1
+
     data class Router(
         val id: String,
         val name: String,
-        val url: String,
+        val url: String,           // 本地访问地址（局域网）
         val iconColor: Int,
         val customIconPath: String?,
         val username: String = "",
         val password: String = "",
-        val showIp: Boolean = true
-    )
+        val showIp: Boolean = true,
+        val remoteUrl: String = "",  // 远程访问地址（Cloudflare 反向代理等）
+        val accessMode: Int = ACCESS_LOCAL  // 当前访问模式
+    ) {
+        /** 根据当前访问模式返回实际使用的地址 */
+        val currentUrl: String
+            get() = if (accessMode == ACCESS_REMOTE && remoteUrl.isNotEmpty()) remoteUrl else url
+
+        /** 当前模式名称 */
+        val modeName: String
+            get() = if (accessMode == ACCESS_REMOTE && remoteUrl.isNotEmpty()) "远程" else "本地"
+    }
 
     // ─── 持久化 ──────────────────────────────────────────
 
@@ -70,7 +83,9 @@ object RouterStore {
                         customIconPath = customPath.ifEmpty { null },
                         username = obj.optString("username", ""),
                         password = obj.optString("password", ""),
-                        showIp = obj.optBoolean("showIp", true)
+                        showIp = obj.optBoolean("showIp", true),
+                        remoteUrl = obj.optString("remoteUrl", ""),
+                        accessMode = obj.optInt("accessMode", ACCESS_LOCAL)
                     )
                 )
             }
@@ -92,6 +107,8 @@ object RouterStore {
                 put("username", r.username)
                 put("password", r.password)
                 put("showIp", r.showIp)
+                put("remoteUrl", r.remoteUrl)
+                put("accessMode", r.accessMode)
             }
             arr.put(obj)
         }

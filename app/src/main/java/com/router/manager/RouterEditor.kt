@@ -29,7 +29,11 @@ object RouterEditor {
     private var editingId: String = ""
     private var editingIconColor: Int = RouterStore.iconColors[0]
     private var editingCustomIconPath: String? = null
+    private var editingRemoteUrl: String = ""
+    private var editingAccessMode: Int = RouterStore.ACCESS_LOCAL
     private var editIconPreview: ImageView? = null
+    private var localModeBtn: Button? = null
+    private var remoteModeBtn: Button? = null
     private var onSavedCallback: ((RouterStore.Router) -> Unit)? = null
 
     /**
@@ -46,6 +50,8 @@ object RouterEditor {
         editingId = router?.id ?: UUID.randomUUID().toString()
         editingIconColor = router?.iconColor ?: RouterStore.iconColors[0]
         editingCustomIconPath = router?.customIconPath
+        editingRemoteUrl = router?.remoteUrl ?: ""
+        editingAccessMode = router?.accessMode ?: RouterStore.ACCESS_LOCAL
         onSavedCallback = onSaved
 
         val nameInput = EditText(activity).apply {
@@ -56,13 +62,51 @@ object RouterEditor {
             setPadding(pad, pad, pad, pad)
         }
         val urlInput = EditText(activity).apply {
-            hint = "地址（如：http://192.168.1.1:3000）"
+            hint = "本地地址（局域网，如：http://192.168.1.1）"
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI
             setText(router?.url ?: "")
             setSelection(text.length)
             val pad = dp(activity, 12)
             setPadding(pad, pad, pad, pad)
         }
+        val remoteUrlInput = EditText(activity).apply {
+            hint = "远程地址（Cloudflare等，如：https://router.example.com）"
+            inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI
+            setText(editingRemoteUrl)
+            setSelection(text.length)
+            val pad = dp(activity, 12)
+            setPadding(pad, pad, pad, pad)
+        }
+
+        // 访问模式切换
+        val modeLabel = TextView(activity).apply {
+            text = "默认访问方式"
+            textSize = 13f
+            setTextColor(0xFF666666.toInt())
+            setPadding(dp(activity, 4), dp(activity, 8), 0, dp(activity, 4))
+        }
+        localModeBtn = Button(activity).apply {
+            text = "本地访问"
+            setOnClickListener {
+                editingAccessMode = RouterStore.ACCESS_LOCAL
+                updateModeButtons(activity)
+            }
+        }
+        remoteModeBtn = Button(activity).apply {
+            text = "远程访问"
+            setOnClickListener {
+                editingAccessMode = RouterStore.ACCESS_REMOTE
+                updateModeButtons(activity)
+            }
+        }
+        val modeBtnRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(localModeBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = dp(activity, 8)
+            })
+            addView(remoteModeBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        }
+        updateModeButtons(activity)
         val usernameInput = EditText(activity).apply {
             hint = "登录用户名（可选，保存后自动填充）"
             setText(router?.username ?: "")
@@ -101,6 +145,9 @@ object RouterEditor {
             )
             addView(nameInput)
             addView(urlInput)
+            addView(remoteUrlInput)
+            addView(modeLabel)
+            addView(modeBtnRow)
             addView(usernameInput)
             addView(passwordInput)
         }
@@ -154,7 +201,9 @@ object RouterEditor {
                     customIconPath = editingCustomIconPath,
                     username = usernameInput.text.toString().trim(),
                     password = passwordInput.text.toString().trim(),
-                    showIp = router?.showIp ?: true
+                    showIp = router?.showIp ?: true,
+                    remoteUrl = remoteUrlInput.text.toString().trim(),
+                    accessMode = editingAccessMode
                 )
                 onSavedCallback?.invoke(finalRouter)
                 editIconPreview = null
@@ -292,6 +341,16 @@ object RouterEditor {
             )
             it.setImageDrawable(RouterStore.getIconDrawable(activity, preview))
         }
+    }
+
+    private fun updateModeButtons(activity: Activity) {
+        val selected = AppSettings.lighten(AppSettings.getThemeColor(activity), 0.85f)
+        localModeBtn?.setBackgroundColor(
+            if (editingAccessMode == RouterStore.ACCESS_LOCAL) selected else 0xFFEEEEEE.toInt()
+        )
+        remoteModeBtn?.setBackgroundColor(
+            if (editingAccessMode == RouterStore.ACCESS_REMOTE) selected else 0xFFEEEEEE.toInt()
+        )
     }
 
     private fun dp(activity: Activity, value: Int): Int {

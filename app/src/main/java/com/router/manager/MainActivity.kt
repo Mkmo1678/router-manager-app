@@ -47,6 +47,9 @@ class MainActivity : android.app.Activity() {
     /** WebView 池：路由器ID -> WebView，切换时不销毁，保持登录状态 */
     private val webViewPool = mutableMapOf<String, WebView>()
 
+    /** 跟踪每个 WebView 加载时的 URL，用于检测访问模式切换 */
+    private val webViewUrls = mutableMapOf<String, String>()
+
     /** 已打开的路由器（多任务列表） */
     private val openedRouters = mutableListOf<RouterStore.Router>()
 
@@ -222,9 +225,17 @@ class MainActivity : android.app.Activity() {
         currentRouterId = router.id
         currentTab = TAB_WEB
 
+        // 如果访问地址变化（切换了本地/远程模式），销毁旧 WebView 重新创建
+        val savedUrl = webViewUrls[router.id]
+        if (savedUrl != null && savedUrl != router.currentUrl) {
+            webViewPool.remove(router.id)?.destroy()
+            webViewUrls.remove(router.id)
+        }
+
         val webView = webViewPool.getOrPut(router.id) {
             createWebView(router)
         }
+        webViewUrls[router.id] = router.currentUrl
         if (openedRouters.none { it.id == router.id }) {
             openedRouters.add(router)
         }
@@ -402,13 +413,14 @@ class MainActivity : android.app.Activity() {
                 }
             }
 
-            loadUrl(router.url)
+            loadUrl(router.currentUrl)
         }
     }
 
     /** 关闭一个已打开的 WebView */
     private fun closeRouter(router: RouterStore.Router) {
         webViewPool.remove(router.id)?.destroy()
+        webViewUrls.remove(router.id)
         openedRouters.removeAll { it.id == router.id }
         if (currentRouterId == router.id) {
             if (openedRouters.isNotEmpty()) {
@@ -614,6 +626,7 @@ class MainActivity : android.app.Activity() {
     override fun onDestroy() {
         webViewPool.values.forEach { it.destroy() }
         webViewPool.clear()
+        webViewUrls.clear()
         super.onDestroy()
     }
 

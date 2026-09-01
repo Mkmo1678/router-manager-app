@@ -212,6 +212,12 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             )
         }
 
+        // 名称行：名称 + 访问模式标签（点击切换）
+        val nameRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
         val nameText = TextView(context).apply {
             text = router.name
             textSize = 18f
@@ -219,14 +225,40 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setTypeface(null, Typeface.BOLD)
         }
 
+        val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
+        val modeTag = TextView(context).apply {
+            text = if (isRemote) "远程" else "本地"
+            textSize = 10f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            setPadding(dp(6), dp(2), dp(6), dp(2))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(8).toFloat()
+                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+            }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginStart = dp(8)
+            }
+            setOnClickListener {
+                toggleAccessMode(router)
+            }
+        }
+
+        nameRow.addView(nameText)
+        nameRow.addView(modeTag)
+
         val urlText = TextView(context).apply {
-            text = if (show) router.url else "地址：••••••••••••"
+            text = if (show) router.currentUrl else "地址：••••••••••••"
             textSize = 13f
             setTextColor(Color.parseColor("#555555"))
             setPadding(0, dp(3), 0, 0)
         }
 
-        textLayout.addView(nameText)
+        textLayout.addView(nameRow)
         textLayout.addView(urlText)
 
         // 账号密码行（如果有保存）
@@ -316,6 +348,31 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             routers[index] = updated
             RouterStore.saveRouters(context, routers)
             refresh()
+        }
+    }
+
+    /** 切换单个路由器的访问模式（本地/远程）并保存 */
+    private fun toggleAccessMode(router: RouterStore.Router) {
+        val index = routers.indexOfFirst { it.id == router.id }
+        if (index >= 0) {
+            val newMode = if (router.accessMode == RouterStore.ACCESS_LOCAL) {
+                if (router.remoteUrl.isEmpty()) {
+                    android.widget.Toast.makeText(context, "请先在编辑中填写远程地址", android.widget.Toast.LENGTH_SHORT).show()
+                    return
+                }
+                RouterStore.ACCESS_REMOTE
+            } else {
+                RouterStore.ACCESS_LOCAL
+            }
+            val updated = router.copy(accessMode = newMode)
+            routers[index] = updated
+            RouterStore.saveRouters(context, routers)
+            refresh()
+            android.widget.Toast.makeText(
+                context,
+                "已切换为${if (newMode == RouterStore.ACCESS_REMOTE) "远程" else "本地"}访问",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
