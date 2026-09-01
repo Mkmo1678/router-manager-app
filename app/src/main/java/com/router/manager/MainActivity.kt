@@ -2,15 +2,21 @@ package com.router.manager
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.DownloadManager
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.URLUtil
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebChromeClient.FileChooserParams
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -30,6 +36,7 @@ class MainActivity : android.app.Activity() {
         private const val TAB_MULTI = 1
         private const val TAB_WEB = 2
         private const val TAB_ABOUT = 3
+        private const val REQUEST_FILE_CHOOSER = 2001
     }
 
     private lateinit var contentContainer: FrameLayout
@@ -52,6 +59,9 @@ class MainActivity : android.app.Activity() {
     private var statusBarHeight: Int = 0
     private var navBarHeight: Int = 0
     private var defaultUserAgent: String? = null
+
+    /** 文件上传回调 */
+    private var uploadMessage: ValueCallback<Array<Uri>>? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -348,7 +358,50 @@ class MainActivity : android.app.Activity() {
                     }
                 }
             }
-            webChromeClient = WebChromeClient()
+            webChromeClient = object : WebChromeClient() {
+                // 文件上传支持
+                override fun onShowFileChooser(
+                    webView: WebView?,
+                    filePathCallback: ValueCallback<Array<Uri>>?,
+                    fileChooserParams: FileChooserParams?
+                ): Boolean {
+                    uploadMessage?.onReceiveValue(null)
+                    uploadMessage = filePathCallback
+                    val intent = fileChooserParams?.createIntent()
+                    if (intent != null) {
+                        try {
+                            startActivityForResult(intent, REQUEST_FILE_CHOOSER)
+                        } catch (e: Exception) {
+                            uploadMessage = null
+                            Toast.makeText(this@MainActivity, "无法打开文件选择器", Toast.LENGTH_SHORT).show()
+                            return false
+                        }
+                    }
+                    return true
+                }
+            }
+
+            // 文件下载支持
+            setDownloadListener { url, userAgent, contentDisposition, mimeType, _ ->
+                try {
+                    val fileName = URLUtil.guessFileName(url, contentDisposition, mimeType)
+                    val request = DownloadManager.Request(Uri.parse(url)).apply {
+                        setMimeType(mimeType)
+                        addRequestHeader("User-Agent", userAgent)
+                        setTitle(fileName)
+                        setDescription("路由器管理下载")
+                        allowScanningByMediaScanner()
+                        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                    }
+                    val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                    dm.enqueue(request)
+                    Toast.makeText(this@MainActivity, "开始下载：$fileName", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "下载失败：${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+
             loadUrl(router.url)
         }
     }
@@ -539,6 +592,15 @@ class MainActivity : android.app.Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        // 文件上传选择结果
+        if (requestCode == REQUEST_FILE_CHOOSER) {
+            val results = if (resultCode == RESULT_OK && data != null) {
+                FileChooserParams.parseResult(resultCode, data)
+            } else null
+            uploadMessage?.onReceiveValue(results)
+            uploadMessage = null
+            return
+        }
         if (RouterEditor.handleActivityResult(this, requestCode, resultCode, data)) return
         SettingsDialog.handleActivityResult(this, requestCode, resultCode, data)
     }
