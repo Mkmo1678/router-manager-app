@@ -19,8 +19,16 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * App 设置对话框：自定义标题、主题色、背景图
@@ -28,6 +36,8 @@ import java.io.FileOutputStream
 object SettingsDialog {
 
     private const val REQUEST_PICK_BACKGROUND = 1002
+    private const val REQUEST_BACKUP = 1003
+    private const val REQUEST_RESTORE = 1004
 
     private var tempTitle: String = ""
     private var tempThemeColor: Int = AppSettings.defaultTheme
@@ -222,6 +232,46 @@ object SettingsDialog {
         }
         updateIpButtons(activity)
 
+        // 数据备份与恢复
+        val backupLabel = TextView(activity).apply {
+            text = "数据备份与恢复"
+            textSize = 14f
+            setTextColor(Color.parseColor("#666666"))
+            setPadding(dp(activity, 4), dp(activity, 12), 0, dp(activity, 4))
+        }
+
+        val backupBtn = Button(activity).apply {
+            text = "备份数据"
+            setOnClickListener {
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                    val time = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                    putExtra(Intent.EXTRA_TITLE, "router_backup_$time.json")
+                }
+                activity.startActivityForResult(intent, REQUEST_BACKUP)
+            }
+        }
+
+        val restoreBtn = Button(activity).apply {
+            text = "恢复数据"
+            setOnClickListener {
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                }
+                activity.startActivityForResult(intent, REQUEST_RESTORE)
+            }
+        }
+
+        val backupBtnRow = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(backupBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = dp(activity, 8)
+            })
+            addView(restoreBtn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
         val content = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(activity, 20), dp(activity, 16), dp(activity, 20), dp(activity, 8))
@@ -235,6 +285,8 @@ object SettingsDialog {
             addView(uaBtnRow)
             addView(ipLabel)
             addView(ipBtnRow)
+            addView(backupLabel)
+            addView(backupBtnRow)
         }
 
         AlertDialog.Builder(activity)
@@ -271,7 +323,94 @@ object SettingsDialog {
                 return true
             }
         }
+        if (requestCode == REQUEST_BACKUP && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                doBackup(activity, uri)
+                return true
+            }
+        }
+        if (requestCode == REQUEST_RESTORE && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                doRestore(activity, uri)
+                return true
+            }
+        }
         return false
+    }
+
+    // ─── 数据备份与恢复 ────────────────────────────────────────
+
+    private fun doBackup(activity: Activity, uri: Uri) {
+        try {
+            val routers = RouterStore.loadRouters(activity)
+            val jsonArray = JSONArray()
+            for (r in routers) {
+                val obj = JSONObject().apply {
+                    put("id", r.id)
+                    put("name", r.name)
+                    put("url", r.url)
+                    put("remoteUrl", r.remoteUrl)
+                    put("iconColor", r.iconColor)
+                    put("customIconPath", r.customIconPath ?: "")
+                    put("username", r.username)
+                    put("password", r.password)
+                    put("showIp", r.showIp)
+                    put("accessMode", r.accessMode)
+                }
+                jsonArray.put(obj)
+            }
+            val root = JSONObject().apply {
+                put("version", 1)
+                put("backupTime", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
+                put("routers", jsonArray)
+            }
+            activity.contentResolver.openOutputStream(uri)?.use { out ->
+                OutputStreamWriter(out).use { writer ->
+                    writer.write(root.toString(2))
+                }
+            }
+            Toast.makeText(activity, "备份成功，共 ${routers.size} 个路由器", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(activity, "备份失败：${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun doRestore(activity: Activity, uri: Uri) {
+        try {
+            val content = activity.contentResolver.openInputStream(uri)?.use { input ->
+                BufferedReader(InputStreamReader(input)).use { reader ->
+                    reader.readText()
+                }
+            } ?: run {
+                Toast.makeText(activity, "读取文件失败", Toast.LENGTH_SHORT).show()
+                return
+            }
+            val root = JSONObject(content)
+            val jsonArray = root.getJSONArray("routers")
+            val restored = mutableListOf<RouterStore.Router>()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val customIcon = obj.optString("customIconPath", "")
+                val router = RouterStore.Router(
+                    id = obj.optString("id", System.currentTimeMillis().toString()),
+                    name = obj.optString("name", "未命名"),
+                    url = obj.optString("url", ""),
+                    remoteUrl = obj.optString("remoteUrl", ""),
+                    iconColor = obj.optInt("iconColor", AppSettings.defaultTheme),
+                    customIconPath = if (customIcon.isNotEmpty() && File(customIcon).exists()) customIcon else null,
+                    username = obj.optString("username", ""),
+                    password = obj.optString("password", ""),
+                    showIp = obj.optBoolean("showIp", true),
+                    accessMode = obj.optInt("accessMode", RouterStore.ACCESS_LOCAL)
+                )
+                restored.add(router)
+            }
+            RouterStore.saveRouters(activity, restored)
+            onChangedCallback?.invoke()
+            Toast.makeText(activity, "恢复成功，共 ${restored.size} 个路由器", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(activity, "恢复失败：${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     // ─── 内部方法 ────────────────────────────────────────
