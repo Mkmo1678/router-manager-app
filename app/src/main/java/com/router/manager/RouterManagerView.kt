@@ -225,7 +225,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setTypeface(null, Typeface.BOLD)
             maxLines = 2
             layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
