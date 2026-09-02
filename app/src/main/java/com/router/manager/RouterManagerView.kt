@@ -433,12 +433,12 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             }
         }
 
-        // 编辑按钮（精致：主题色圆形+白边+阴影）
+        // 编辑按钮（精致小铅笔）
         val editBtn = ImageView(context).apply {
-            val size = dp(34)
+            val size = dp(26)
             layoutParams = LinearLayout.LayoutParams(size, size)
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.parseColor("#888888"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -607,12 +607,12 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         textLayout.addView(nameRow)
         textLayout.addView(urlText)
 
-        // 编辑按钮（精致：主题色圆形+白边+阴影）
+        // 编辑按钮（精致小铅笔）
         val editBtn = ImageView(context).apply {
-            val size = dp(34)
+            val size = dp(24)
             layoutParams = LinearLayout.LayoutParams(size, size).apply { marginStart = dp(8) }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.parseColor("#888888"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -741,14 +741,14 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         content.addView(nameText)
         content.addView(modeSegment)
 
-        // 编辑按钮（精致：主题色圆形+白边+阴影）
+        // 编辑按钮（精致小铅笔）
         val editBtn = ImageView(context).apply {
-            val size = dp(32)
+            val size = dp(22)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
                 setMargins(0, dp(6), dp(6), 0)
             }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.parseColor("#888888"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -869,14 +869,14 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         content.addView(nameText)
         content.addView(modeSegment)
 
-        // 编辑按钮（精致：主题色圆形+白边+阴影）
+        // 编辑按钮（精致小铅笔）
         val editBtn = ImageView(context).apply {
-            val size = dp(28)
+            val size = dp(20)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
                 setMargins(0, dp(2), dp(2), 0)
             }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.parseColor("#888888"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
