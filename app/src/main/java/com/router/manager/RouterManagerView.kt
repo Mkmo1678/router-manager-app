@@ -433,12 +433,17 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             }
         }
 
-        // 编辑按钮（精致小铅笔）
+        // 编辑按钮（半透明圆圈+白色铅笔，统一风格）
         val editBtn = ImageView(context).apply {
-            val size = dp(26)
+            val size = dp(28)
             layoutParams = LinearLayout.LayoutParams(size, size)
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#555555"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#55000000"))
+            }
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -609,10 +614,15 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
 
         // 编辑按钮（精致小铅笔）
         val editBtn = ImageView(context).apply {
-            val size = dp(24)
+            val size = dp(26)
             layoutParams = LinearLayout.LayoutParams(size, size).apply { marginStart = dp(8) }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#555555"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(5), dp(5), dp(5), dp(5))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#55000000"))
+            }
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -874,14 +884,19 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         content.addView(nameText)
         content.addView(modeSegment)
 
-        // 编辑按钮（精致小铅笔）
+        // 编辑按钮（半透明圆圈+白色铅笔，统一风格）
         val editBtn = ImageView(context).apply {
-            val size = dp(24)
+            val size = dp(26)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
                 setMargins(0, dp(2), dp(2), 0)
             }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#444444"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(5), dp(5), dp(5), dp(5))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#55000000"))
+            }
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
