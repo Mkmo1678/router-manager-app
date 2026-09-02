@@ -438,14 +438,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             val size = dp(34)
             layoutParams = LinearLayout.LayoutParams(size, size)
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
-            setPadding(dp(7), dp(7), dp(7), dp(7))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
-                setStroke(dp(2), Color.WHITE)
-            }
-            elevation = dp(3).toFloat()
+            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -619,14 +612,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             val size = dp(34)
             layoutParams = LinearLayout.LayoutParams(size, size).apply { marginStart = dp(8) }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
-            setPadding(dp(7), dp(7), dp(7), dp(7))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
-                setStroke(dp(2), Color.WHITE)
-            }
-            elevation = dp(3).toFloat()
+            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -762,14 +748,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 setMargins(0, dp(6), dp(6), 0)
             }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
-            setPadding(dp(6), dp(6), dp(6), dp(6))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
-                setStroke(dp(2), Color.WHITE)
-            }
-            elevation = dp(3).toFloat()
+            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -897,14 +876,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 setMargins(0, dp(2), dp(2), 0)
             }
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
-            setPadding(dp(5), dp(5), dp(5), dp(5))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
-                setStroke(dp(2), Color.WHITE)
-            }
-            elevation = dp(3).toFloat()
+            setColorFilter(Color.parseColor("#666666"), PorterDuff.Mode.SRC_ATOP)
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
