@@ -499,60 +499,108 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
+
+        // 名称行：名称 + 小分段控件
+        val nameRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
         val nameText = TextView(context).apply {
             text = router.name
-            textSize = 16f
+            textSize = 15f
             setTextColor(Color.parseColor("#1A1A1A"))
             setTypeface(null, Typeface.BOLD)
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
+
         val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
+        // 小分段控件：本地 / 远程
+        val modeSegment = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(2), dp(2), dp(2), dp(2))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(6).toFloat()
+                setColor(Color.parseColor("#E0E0E0"))
+            }
+            layoutParams = LinearLayout.LayoutParams(dp(84), dp(24)).apply {
+                marginStart = dp(6)
+            }
+        }
+        val localBtn = TextView(context).apply {
+            text = "本地"
+            textSize = 10f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                marginEnd = dp(2)
+            }
+            if (router.accessMode == RouterStore.ACCESS_LOCAL) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(4).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(themeColor)
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
+            setOnClickListener { toggleAccessMode(router, RouterStore.ACCESS_LOCAL) }
+        }
+        val remoteBtn = TextView(context).apply {
+            text = "远程"
+            textSize = 10f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+            if (isRemote) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(4).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(0xFFE65100.toInt())
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
+            setOnClickListener { toggleAccessMode(router, RouterStore.ACCESS_REMOTE) }
+        }
+        modeSegment.addView(localBtn)
+        modeSegment.addView(remoteBtn)
+
+        nameRow.addView(nameText)
+        nameRow.addView(modeSegment)
+
         val urlText = TextView(context).apply {
             text = if (router.showIp) router.currentUrl else "••••••••••••"
             textSize = 12f
             setTextColor(Color.parseColor("#777777"))
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
-            setPadding(0, dp(2), 0, 0)
+            setPadding(0, dp(3), 0, 0)
         }
-        textLayout.addView(nameText)
+        textLayout.addView(nameRow)
         textLayout.addView(urlText)
 
-        // 模式标签 + 编辑
-        val rightLayout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-        }
-        val modeTag = TextView(context).apply {
-            text = if (isRemote) "远程" else "本地"
-            textSize = 9f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.BOLD)
-            setPadding(dp(6), dp(2), dp(6), dp(2))
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(6).toFloat()
-                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
-            }
-            setOnClickListener {
-                val target = if (isRemote) RouterStore.ACCESS_LOCAL else RouterStore.ACCESS_REMOTE
-                toggleAccessMode(router, target)
-            }
-        }
+        // 编辑按钮（明显：主题色圆形背景）
         val editBtn = ImageView(context).apply {
-            val size = dp(28)
-            layoutParams = LinearLayout.LayoutParams(size, size).apply { topMargin = dp(4) }
+            val size = dp(34)
+            layoutParams = LinearLayout.LayoutParams(size, size).apply { marginStart = dp(8) }
             setImageResource(android.R.drawable.ic_menu_edit)
-            setColorFilter(Color.parseColor("#888888"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(7), dp(7), dp(7), dp(7))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(themeColor)
+            }
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
-        rightLayout.addView(modeTag)
-        rightLayout.addView(editBtn)
 
         card.addView(icon)
         card.addView(textLayout)
-        card.addView(rightLayout)
+        card.addView(editBtn)
         return card
     }
 
@@ -617,39 +665,78 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
 
         val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
-        val modeTag = TextView(context).apply {
-            text = if (isRemote) "远程" else "本地"
-            textSize = 10f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.BOLD)
-            setPadding(dp(8), dp(3), dp(8), dp(3))
+        // 分段控件：本地 / 远程
+        val modeSegment = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(2), dp(2), dp(2), dp(2))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(8).toFloat()
-                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+                cornerRadius = dp(7).toFloat()
+                setColor(Color.parseColor("#E0E0E0"))
             }
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(6) }
-            setOnClickListener {
-                val target = if (isRemote) RouterStore.ACCESS_LOCAL else RouterStore.ACCESS_REMOTE
-                toggleAccessMode(router, target)
+            layoutParams = LinearLayout.LayoutParams(dp(96), dp(26)).apply {
+                topMargin = dp(8)
             }
         }
+        val localBtn = TextView(context).apply {
+            text = "本地"
+            textSize = 10f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                marginEnd = dp(2)
+            }
+            if (router.accessMode == RouterStore.ACCESS_LOCAL) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(5).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(themeColor)
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
+            setOnClickListener { toggleAccessMode(router, RouterStore.ACCESS_LOCAL) }
+        }
+        val remoteBtn = TextView(context).apply {
+            text = "远程"
+            textSize = 10f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+            if (isRemote) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(5).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(0xFFE65100.toInt())
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
+            setOnClickListener { toggleAccessMode(router, RouterStore.ACCESS_REMOTE) }
+        }
+        modeSegment.addView(localBtn)
+        modeSegment.addView(remoteBtn)
 
         content.addView(icon)
         content.addView(nameText)
-        content.addView(modeTag)
+        content.addView(modeSegment)
 
-        // 编辑按钮（右上角）
+        // 编辑按钮（右上角，主题色圆形背景，明显）
         val editBtn = ImageView(context).apply {
-            val size = dp(26)
+            val size = dp(30)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
                 setMargins(0, dp(6), dp(6), 0)
             }
             setImageResource(android.R.drawable.ic_menu_edit)
-            setColorFilter(Color.parseColor("#999999"), PorterDuff.Mode.SRC_ATOP)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(themeColor)
+            }
+            elevation = dp(2).toFloat()
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -660,10 +747,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
 
     // ─── 大图标卡片（3列） ────────────────────────────────────────
     private fun createIconCard(router: RouterStore.Router): View {
-        val card = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(4), dp(8), dp(4), dp(8))
+        val card = FrameLayout(context).apply {
             layoutParams = GridLayout.LayoutParams().apply {
                 width = 0
                 height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -671,15 +755,17 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 setMargins(dp(4), dp(4), dp(4), dp(4))
             }
             setOnClickListener { onRouterClick?.invoke(router) }
-            setOnLongClickListener {
-                onRouterEdit?.invoke(router)
-                true
-            }
+        }
+
+        val content = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(2), dp(4), dp(2), dp(4))
         }
 
         val hasCustomIcon = router.customIconPath != null && File(router.customIconPath).exists()
         val icon = ImageView(context).apply {
-            val size = dp(62)
+            val size = dp(60)
             layoutParams = LinearLayout.LayoutParams(size, size)
             scaleType = ImageView.ScaleType.CENTER_CROP
             if (hasCustomIcon) {
@@ -697,7 +783,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                     shape = GradientDrawable.OVAL
                     setColor(router.iconColor)
                 }
-                setPadding(dp(14), dp(14), dp(14), dp(14))
+                setPadding(dp(13), dp(13), dp(13), dp(13))
             }
             elevation = dp(4).toFloat()
         }
@@ -713,29 +799,83 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         }
 
         val isRemote = router.accessMode == RouterStore.ACCESS_REMOTE && router.remoteUrl.isNotEmpty()
-        val modeTag = TextView(context).apply {
-            text = if (isRemote) "远程" else "本地"
-            textSize = 8f
-            setTextColor(Color.WHITE)
-            setPadding(dp(5), dp(1), dp(5), dp(1))
+        // 小分段控件：本地 / 远程
+        val modeSegment = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(1), dp(1), dp(1), dp(1))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(5).toFloat()
-                setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
+                setColor(Color.parseColor("#E0E0E0"))
             }
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = dp(3) }
-            setOnClickListener {
-                val target = if (isRemote) RouterStore.ACCESS_LOCAL else RouterStore.ACCESS_REMOTE
-                toggleAccessMode(router, target)
+            layoutParams = LinearLayout.LayoutParams(dp(76), dp(20)).apply {
+                topMargin = dp(4)
             }
         }
+        val localBtn = TextView(context).apply {
+            text = "本地"
+            textSize = 9f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                marginEnd = dp(1)
+            }
+            if (router.accessMode == RouterStore.ACCESS_LOCAL) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(4).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(themeColor)
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
+            setOnClickListener { toggleAccessMode(router, RouterStore.ACCESS_LOCAL) }
+        }
+        val remoteBtn = TextView(context).apply {
+            text = "远程"
+            textSize = 9f
+            gravity = Gravity.CENTER
+            setTypeface(null, Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+            if (isRemote) {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(4).toFloat()
+                    setColor(Color.WHITE)
+                }
+                setTextColor(0xFFE65100.toInt())
+            } else {
+                setTextColor(Color.parseColor("#888888"))
+            }
+            setOnClickListener { toggleAccessMode(router, RouterStore.ACCESS_REMOTE) }
+        }
+        modeSegment.addView(localBtn)
+        modeSegment.addView(remoteBtn)
 
-        card.addView(icon)
-        card.addView(nameText)
-        card.addView(modeTag)
+        content.addView(icon)
+        content.addView(nameText)
+        content.addView(modeSegment)
+
+        // 编辑按钮（图标右上角，小但明显）
+        val editBtn = ImageView(context).apply {
+            val size = dp(24)
+            layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
+                setMargins(0, dp(2), dp(2), 0)
+            }
+            setImageResource(android.R.drawable.ic_menu_edit)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(5), dp(5), dp(5), dp(5))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(themeColor)
+            }
+            elevation = dp(2).toFloat()
+            setOnClickListener { onRouterEdit?.invoke(router) }
+        }
+
+        card.addView(content)
+        card.addView(editBtn)
         return card
     }
 
