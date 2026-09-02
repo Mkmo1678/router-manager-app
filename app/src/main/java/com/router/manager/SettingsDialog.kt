@@ -344,9 +344,14 @@ object SettingsDialog {
             addView(backupBtnRow)
         }
 
+        // 包在ScrollView中，确保内容过多时可滚动（备份恢复按钮可见）
+        val scrollView = android.widget.ScrollView(activity).apply {
+            addView(content)
+        }
+
         AlertDialog.Builder(activity)
             .setTitle("界面设置")
-            .setView(content)
+            .setView(scrollView)
             .setPositiveButton("保存") { _, _ ->
                 val title = titleInput.text.toString().trim()
                 if (title.isNotEmpty()) {

@@ -82,7 +82,31 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setOnClickListener { onSettingsClick?.invoke() }
         }
 
+        // 布局快捷切换按钮
+        val layoutBtn = ImageView(context).apply {
+            val size = dp(40)
+            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                marginEnd = dp(10)
+            }
+            setImageResource(R.drawable.ic_layout)
+            setColorFilter(Color.parseColor("#999999"), PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#22000000"))
+            }
+            setOnClickListener {
+                val current = AppSettings.getHomeLayout(context)
+                val next = (current + 1) % 4
+                AppSettings.setHomeLayout(context, next)
+                val names = arrayOf("列表布局", "紧凑列表", "网格布局", "大图标")
+                android.widget.Toast.makeText(context, "切换为${names[next]}", android.widget.Toast.LENGTH_SHORT).show()
+                refresh()
+            }
+        }
+
         titleBar.addView(titleText)
+        titleBar.addView(layoutBtn)
         titleBar.addView(settingsBtn)
         contentLayout.addView(titleBar)
 
@@ -418,7 +442,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setPadding(dp(7), dp(7), dp(7), dp(7))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(themeColor)
+                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
                 setStroke(dp(2), Color.WHITE)
             }
             elevation = dp(3).toFloat()
@@ -599,7 +623,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setPadding(dp(7), dp(7), dp(7), dp(7))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(themeColor)
+                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
                 setStroke(dp(2), Color.WHITE)
             }
             elevation = dp(3).toFloat()
@@ -742,7 +766,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setPadding(dp(6), dp(6), dp(6), dp(6))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(themeColor)
+                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
                 setStroke(dp(2), Color.WHITE)
             }
             elevation = dp(3).toFloat()
@@ -877,7 +901,7 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             setPadding(dp(5), dp(5), dp(5), dp(5))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(themeColor)
+                setColor((themeColor and 0x00FFFFFF) or 0xB3000000.toInt())
                 setStroke(dp(2), Color.WHITE)
             }
             elevation = dp(3).toFloat()
