@@ -535,6 +535,10 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 cornerRadius = dp(6).toFloat()
                 setColor(if (isRemote) 0xFFE65100.toInt() else 0xFF2E7D32.toInt())
             }
+            setOnClickListener {
+                val target = if (isRemote) RouterStore.ACCESS_LOCAL else RouterStore.ACCESS_REMOTE
+                toggleAccessMode(router, target)
+            }
         }
         val editBtn = ImageView(context).apply {
             val size = dp(28)
@@ -628,6 +632,10 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { topMargin = dp(6) }
+            setOnClickListener {
+                val target = if (isRemote) RouterStore.ACCESS_LOCAL else RouterStore.ACCESS_REMOTE
+                toggleAccessMode(router, target)
+            }
         }
 
         content.addView(icon)
@@ -719,6 +727,10 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { topMargin = dp(3) }
+            setOnClickListener {
+                val target = if (isRemote) RouterStore.ACCESS_LOCAL else RouterStore.ACCESS_REMOTE
+                toggleAccessMode(router, target)
+            }
         }
 
         card.addView(icon)
