@@ -409,13 +409,19 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
             }
         }
 
-        // 编辑按钮
+        // 编辑按钮（精致：主题色圆形+白边+阴影）
         val editBtn = ImageView(context).apply {
-            val size = dp(32)
+            val size = dp(34)
             layoutParams = LinearLayout.LayoutParams(size, size)
             setImageResource(R.drawable.ic_edit)
-            setColorFilter(Color.parseColor("#AAAAAA"), PorterDuff.Mode.SRC_ATOP)
-            setPadding(dp(6), dp(6), dp(6), dp(6))
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
+            setPadding(dp(7), dp(7), dp(7), dp(7))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(themeColor)
+                setStroke(dp(2), Color.WHITE)
+            }
+            elevation = dp(3).toFloat()
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -584,17 +590,19 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         textLayout.addView(nameRow)
         textLayout.addView(urlText)
 
-        // 编辑按钮（明显：主题色圆形背景）
+        // 编辑按钮（精致：主题色圆形+白边+阴影）
         val editBtn = ImageView(context).apply {
             val size = dp(34)
             layoutParams = LinearLayout.LayoutParams(size, size).apply { marginStart = dp(8) }
-            setImageResource(android.R.drawable.ic_menu_edit)
+            setImageResource(R.drawable.ic_edit)
             setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
             setPadding(dp(7), dp(7), dp(7), dp(7))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(themeColor)
+                setStroke(dp(2), Color.WHITE)
             }
+            elevation = dp(3).toFloat()
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -723,20 +731,21 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         content.addView(nameText)
         content.addView(modeSegment)
 
-        // 编辑按钮（右上角，主题色圆形背景，明显）
+        // 编辑按钮（精致：主题色圆形+白边+阴影）
         val editBtn = ImageView(context).apply {
-            val size = dp(30)
+            val size = dp(32)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
                 setMargins(0, dp(6), dp(6), 0)
             }
-            setImageResource(android.R.drawable.ic_menu_edit)
+            setImageResource(R.drawable.ic_edit)
             setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
             setPadding(dp(6), dp(6), dp(6), dp(6))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(themeColor)
+                setStroke(dp(2), Color.WHITE)
             }
-            elevation = dp(2).toFloat()
+            elevation = dp(3).toFloat()
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
@@ -857,20 +866,21 @@ class RouterManagerView(context: Context, private val statusBarHeight: Int) : Fr
         content.addView(nameText)
         content.addView(modeSegment)
 
-        // 编辑按钮（图标右上角，小但明显）
+        // 编辑按钮（精致：主题色圆形+白边+阴影）
         val editBtn = ImageView(context).apply {
-            val size = dp(24)
+            val size = dp(28)
             layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.END).apply {
                 setMargins(0, dp(2), dp(2), 0)
             }
-            setImageResource(android.R.drawable.ic_menu_edit)
+            setImageResource(R.drawable.ic_edit)
             setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
             setPadding(dp(5), dp(5), dp(5), dp(5))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(themeColor)
+                setStroke(dp(2), Color.WHITE)
             }
-            elevation = dp(2).toFloat()
+            elevation = dp(3).toFloat()
             setOnClickListener { onRouterEdit?.invoke(router) }
         }
 
